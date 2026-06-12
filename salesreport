@@ -1,0 +1,1141 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>세일즈 일일 리포트</title>
+<style>
+:root{
+  --bg:#f4f6fa; --card:#ffffff; --card2:#f0f3f8; --line:#e2e6ee;
+  --txt:#1a1f2b; --sub:#64708a; --mut:#94a0b5;
+  --acc:#3b82f6; --acc2:#2563eb; --acc-d:#1d4ed8;
+  --ok:#16a34a; --warn:#d97706; --bad:#dc2626; --pur:#7c3aed;
+  --r:14px; --r2:10px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{max-width:760px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.hide{display:none!important}
+button{font-family:inherit;cursor:pointer;border:none}
+input,select,textarea{font-family:inherit;font-size:15px}
+
+/* ====== 상단 헤더 ====== */
+.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 16px}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--acc),var(--pur));
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
+.brand h1{font-size:15px;margin:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .sub{font-size:11px;color:var(--sub)}
+.role-tabs{display:flex;gap:6px;margin-top:12px;background:var(--card);padding:4px;border-radius:11px}
+.role-tabs button{flex:1;padding:9px 6px;border-radius:8px;background:transparent;color:var(--sub);
+  font-size:13px;font-weight:600;transition:.15s}
+.role-tabs button.on{background:var(--acc2);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.4)}
+
+.wrap{flex:1;padding:16px;padding-bottom:40px}
+
+/* ====== 진행바 ====== */
+.prog{display:flex;align-items:center;gap:6px;margin-bottom:18px}
+.prog .bar{flex:1;height:6px;background:var(--card2);border-radius:99px;overflow:hidden}
+.prog .fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--pur));width:0;transition:.3s}
+.prog .pct{font-size:12px;color:var(--sub);font-weight:600;min-width:34px;text-align:right}
+
+/* ====== 카드 ====== */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,30,60,.04),0 6px 20px rgba(20,30,60,.04)}
+.step-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.step-num{width:30px;height:30px;border-radius:9px;background:var(--acc2);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.step-head h2{font-size:16px;margin:0}
+.step-head .d{font-size:12px;color:var(--sub)}
+
+label{display:block;font-size:13px;font-weight:600;color:var(--sub);margin:14px 0 7px}
+label .req{color:var(--bad)}
+.auto-hint{font-size:11px;font-weight:600;color:var(--acc2);background:rgba(37,99,235,.08);
+  padding:2px 8px;border-radius:99px;margin-left:6px;white-space:nowrap}
+.inp,select,textarea{width:100%;padding:12px 13px;background:var(--card2);border:1px solid var(--line);
+  border-radius:var(--r2);color:var(--txt);outline:none;transition:.15s}
+.inp:focus,select:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:vertical;min-height:78px;line-height:1.55}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa3b2' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 14px;border-radius:99px;background:var(--card2);border:1px solid var(--line);
+  color:var(--sub);font-size:13px;font-weight:600;transition:.15s}
+.chip.on{background:var(--acc2);color:#fff;border-color:var(--acc)}
+
+/* 부서/팀 큰 선택 버튼 */
+.crumb{display:inline-block;font-size:12px;font-weight:600;color:var(--acc2);background:rgba(37,99,235,.08);
+  border:1px solid var(--line);padding:6px 12px;border-radius:99px;margin-bottom:14px}
+
+/* 전역 브레드크럼 */
+.bcrumb{display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin-bottom:12px;
+  background:var(--card);border:1px solid var(--line);border-radius:99px;padding:6px 10px;
+  box-shadow:0 1px 3px rgba(20,30,60,.04)}
+.bc-link{font-size:12px;font-weight:600;color:var(--acc2);background:transparent;padding:5px 10px;border-radius:99px;
+  white-space:nowrap;transition:.12s;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.bc-link:active{background:rgba(37,99,235,.1)}
+.bc-link.cur{background:var(--acc2);color:#fff}
+.bc-link.bc-empty{color:var(--mut)}
+.bc-sep{color:var(--mut);font-size:12px;padding:0 1px}
+
+/* 다음 안내 + 준비 강조 */
+.next-hint{margin-top:12px;font-size:13px;font-weight:600;color:var(--ok);
+  background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);padding:10px 13px;border-radius:10px}
+.next-hint.muted{color:var(--sub);background:var(--card2);border-color:var(--line);font-weight:500}
+@keyframes readyPulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.5)}50%{box-shadow:0 0 0 6px rgba(37,99,235,0)}}
+.btn-pri.ready{animation:readyPulse 1.4s ease-out infinite}
+.big-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.big-chip{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:16px 16px;
+  border-radius:13px;background:var(--card2);border:1.5px solid var(--line);color:var(--txt);
+  text-align:left;transition:.15s}
+.big-chip:active{transform:scale(.97)}
+.big-chip.on{background:rgba(37,99,235,.1);border-color:var(--acc);box-shadow:0 3px 14px rgba(37,99,235,.18)}
+.big-chip .bc-ic{font-size:20px}
+.big-chip .bc-t{font-size:15px;font-weight:700}
+.big-chip .bc-s{font-size:11px;color:var(--sub);font-weight:500}
+.big-chip.on .bc-t{color:var(--acc2)}
+
+/* 담당자 선택 버튼 */
+.member-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.member-chip{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 8px;
+  border-radius:12px;background:var(--card2);border:1.5px solid var(--line);color:var(--txt);
+  font-size:14px;font-weight:600;transition:.15s}
+.member-chip:active{transform:scale(.96)}
+.member-chip.on{background:rgba(59,130,246,.12);border-color:var(--acc)}
+.member-chip .mc-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--acc),var(--pur))}
+.member-chip.on .mc-av{box-shadow:0 0 0 3px rgba(59,130,246,.3)}
+
+/* 보고 대상 선택 */
+.rpt-targets{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.rpt-opt{padding:16px 14px;border-radius:var(--r2);background:var(--card2);border:2px solid var(--line);
+  text-align:center;transition:.15s}
+.rpt-opt.on{border-color:var(--acc);background:rgba(59,130,246,.12)}
+.rpt-opt .ic{font-size:22px}
+.rpt-opt .t{font-size:14px;font-weight:700;margin-top:6px}
+.rpt-opt .s{font-size:11px;color:var(--sub);margin-top:3px}
+
+/* 항목 토글 */
+.sec-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px;
+  background:var(--card2);border:1px solid var(--line);border-radius:var(--r2);margin-bottom:10px;cursor:pointer;transition:.15s}
+.sec-toggle.on{border-color:var(--acc);background:rgba(59,130,246,.08)}
+.sec-toggle .lbl{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}
+.sec-toggle .ic{font-size:18px}
+.sw{width:42px;height:24px;border-radius:99px;background:var(--line);position:relative;transition:.2s;flex-shrink:0}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:.2s}
+.sec-toggle.on .sw{background:var(--acc)}
+.sec-toggle.on .sw::after{transform:translateX(18px)}
+
+.sec-body{padding:4px 2px 10px;animation:fade .2s}
+@keyframes fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* 숫자 스텝퍼 */
+.stp{display:flex;align-items:center;gap:0;background:var(--card2);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden}
+.stp button{width:46px;height:44px;background:transparent;color:var(--acc);font-size:22px;font-weight:600}
+.stp button:active{background:var(--card)}
+.stp input{flex:1;text-align:center;background:transparent;border:none;color:var(--txt);font-weight:700;font-size:16px;width:100%;-moz-appearance:textfield}
+.stp input::-webkit-outer-spin-button,.stp input::-webkit-inner-spin-button{-webkit-appearance:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* 대리점 검색 */
+.ag-search{position:relative}
+.ag-list{max-height:260px;overflow-y:auto;margin-top:8px;border:1px solid var(--line);border-radius:var(--r2)}
+.ag-item{padding:11px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;transition:.1s}
+.ag-item:last-child{border-bottom:none}
+.ag-item:active{background:var(--card2)}
+.ag-item.on{background:rgba(59,130,246,.12)}
+.ag-item .nm{font-weight:600;font-size:14px}
+.ag-item .meta{font-size:11px;color:var(--sub)}
+.ag-item .gr{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--card2);color:var(--sub);flex-shrink:0}
+.selected-ag{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;
+  background:var(--acc2);color:#fff;font-size:12px;font-weight:600}
+.tag button{background:rgba(255,255,255,.2);border-radius:50%;width:16px;height:16px;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0}
+
+/* 하단 네비 */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.96);
+  backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  display:flex;gap:10px;max-width:760px;margin:0 auto}
+/* 카드 내부 인라인 네비 (항상 보이는 진행 버튼) */
+.inline-nav{display:flex;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.inline-nav .btn-sec{flex:0 0 auto;padding:13px 20px}
+.inline-nav .btn-pri{flex:1;padding:13px}
+.btn{flex:1;padding:14px;border-radius:var(--r2);font-weight:700;font-size:15px;transition:.15s}
+.btn-pri{background:var(--acc2);color:#fff}
+.btn-pri:active{background:var(--acc-d)}
+.btn-pri:disabled{opacity:.4;background:var(--mut)}
+.btn-sec{background:var(--card2);color:var(--txt);border:1px solid var(--line);flex:0 0 auto;padding:14px 22px}
+
+/* 요약 미리보기 */
+.review-block{background:var(--card2);border-radius:var(--r2);padding:14px;margin-bottom:10px}
+.review-block .rh{font-size:13px;font-weight:700;color:var(--acc);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.review-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:4px 0}
+.review-row .k{color:var(--sub)}
+.review-row .v{font-weight:600;text-align:right}
+.review-txt{font-size:13px;color:var(--txt);white-space:pre-wrap;line-height:1.55}
+
+/* 제출완료 */
+.done{text-align:center;padding:40px 20px}
+.done .big{font-size:60px}
+.done h2{margin:14px 0 6px}
+.done p{color:var(--sub);font-size:14px}
+.recv-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:99px;
+  background:var(--card2);font-size:12px;margin:5px}
+
+/* ===== 대시보드(팀장/부서장) ===== */
+.dash-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.dash-head h2{font-size:18px;margin:0}
+.who-sel{display:flex;align-items:center;gap:8px}
+.who-sel select{width:auto;min-width:140px;padding:9px 32px 9px 12px}
+.logged{font-size:12px;font-weight:700;color:var(--acc2);background:rgba(37,99,235,.08);padding:7px 12px;border-radius:99px}
+.logout-btn{font-size:12px;font-weight:600;color:var(--sub);background:var(--card2);border:1px solid var(--line);padding:7px 12px;border-radius:99px}
+.logout-btn:active{background:var(--line)}
+.login-card{max-width:420px;margin:30px auto;text-align:center}
+.login-card .login-ic{font-size:44px}
+.login-card h2{margin:8px 0 4px}
+.login-sub{font-size:13px;color:var(--sub);line-height:1.6;margin:0 0 18px}
+.login-card label{text-align:left}
+.login-note{font-size:11px;color:var(--mut);margin-top:14px;line-height:1.5;background:var(--card2);padding:10px;border-radius:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:14px 12px;text-align:center}
+.stat .n{font-size:24px;font-weight:800}
+.stat .l{font-size:11px;color:var(--sub);margin-top:3px}
+.stat.b .n{color:var(--acc)} .stat.g .n{color:var(--ok)} .stat.o .n{color:var(--warn)} .stat.p .n{color:var(--pur)}
+
+.filter-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px}
+.filter-bar button{padding:8px 14px;border-radius:99px;background:var(--card);border:1px solid var(--line);
+  color:var(--sub);font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.filter-bar button.on{background:var(--acc2);color:#fff;border-color:var(--acc)}
+
+/* 기간(일간/주간) 토글 */
+.period-toggle{display:flex;gap:6px;background:var(--card2);padding:4px;border-radius:11px;margin-bottom:14px}
+.period-toggle button{flex:1;padding:10px;border-radius:8px;background:transparent;color:var(--sub);font-size:13px;font-weight:700;transition:.15s}
+.period-toggle button.on{background:var(--card);color:var(--acc2);box-shadow:0 1px 4px rgba(20,30,60,.1)}
+
+/* 팀원/부서원 현황 매트릭스 */
+.mstat-card{padding:16px}
+.mstat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.mstat-title{font-size:14px;font-weight:700}
+.mstat-rate{font-size:13px;color:var(--sub)}
+.mstat-rate b{color:var(--txt);font-size:15px}
+.mstat-rate .r-good{color:var(--ok);font-weight:700}
+.mstat-rate .r-mid{color:var(--warn);font-weight:700}
+.mstat-rate .r-low{color:var(--bad);font-weight:700}
+.mstat-bar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin-bottom:12px}
+.mstat-fill{height:100%;background:linear-gradient(90deg,var(--ok),#34d399);transition:.4s}
+.mstat-list{display:flex;flex-direction:column;gap:2px;max-height:340px;overflow-y:auto}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 8px;border-radius:8px}
+.mrow.on{background:rgba(34,163,74,.05)}
+.mrow.off{opacity:.62}
+.mrow-l{display:flex;align-items:center;gap:8px;min-width:0}
+.mdot{width:8px;height:8px;border-radius:50%;background:var(--mut);flex-shrink:0}
+.mdot.g{background:var(--ok);box-shadow:0 0 0 3px rgba(34,163,74,.15)}
+.mname{font-weight:700;font-size:13px}
+.mteam{font-size:11px;color:var(--sub)}
+.mrow-r{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.mtag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px}
+.mtag.promo{background:rgba(59,130,246,.15);color:#2563eb}
+.mtag.inc{background:rgba(34,163,74,.15);color:#16a34a}
+.mtag.note{background:rgba(217,119,6,.15);color:#d97706}
+.mtag.etc{background:rgba(107,114,128,.18);color:#64708a}
+.mtime{font-size:11px;color:var(--mut);margin-left:4px}
+.mwait{font-size:11px;color:var(--mut);background:var(--card2);padding:3px 10px;border-radius:99px}
+.feed-title{font-size:14px;font-weight:700;margin:18px 0 10px}
+
+.feed-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px;animation:fade .25s}
+.fi-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.fi-who{display:flex;align-items:center;gap:10px;min-width:0}
+.avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--acc),var(--pur));
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0}
+.fi-who .nm{font-weight:700;font-size:14px}
+.fi-who .mt{font-size:11px;color:var(--sub)}
+.fi-time{font-size:11px;color:var(--mut);text-align:right;flex-shrink:0}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.bdg{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600}
+.bdg.promo{background:rgba(59,130,246,.18);color:#7dabfb}
+.bdg.inc{background:rgba(34,197,94,.18);color:#5ee08a}
+.bdg.noinc{background:rgba(245,158,11,.18);color:#fbbf24}
+.bdg.note{background:rgba(139,92,246,.18);color:#b794f6}
+.bdg.etc{background:rgba(107,114,128,.2);color:#a1a8b5}
+.bdg.tl{background:rgba(59,130,246,.12);color:var(--sub);border:1px solid var(--line)}
+.bdg.dh{background:rgba(139,92,246,.12);color:var(--pur);border:1px solid var(--line)}
+.fi-section{padding:10px 0;border-top:1px solid var(--line)}
+.fi-section .st{font-size:12px;font-weight:700;color:var(--acc);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.fi-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px}
+.fi-kv .k{color:var(--sub)}
+.fi-kv .v{font-weight:600}
+.fi-body{font-size:13px;white-space:pre-wrap;color:var(--txt);line-height:1.55}
+.ag-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.ag-pills span{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--card2);color:var(--sub)}
+.empty{text-align:center;padding:50px 20px;color:var(--mut)}
+.empty .ic{font-size:44px;opacity:.5}
+
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--card2);
+  border:1px solid var(--acc);color:var(--txt);padding:12px 18px;border-radius:99px;font-size:13px;font-weight:600;
+  z-index:99;box-shadow:0 8px 30px rgba(20,30,60,.18);animation:toastIn .3s;display:flex;align-items:center;gap:8px}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+
+@media(max-width:600px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .grid2{grid-template-columns:1fr}
+  .rpt-targets{grid-template-columns:1fr}
+  .member-pick{grid-template-columns:repeat(2,1fr)}
+  .big-pick{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="top-row">
+      <div class="brand">
+        <div class="logo">H</div>
+        <div>
+          <h1>세일즈 일일 리포트</h1>
+          <div class="sub">하나투어 영업본부</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--sub);text-align:right">
+        <span class="live-dot"></span> 실시간<br><span id="todayLbl"></span>
+      </div>
+    </div>
+    <div class="role-tabs">
+      <button data-role="sales" class="on" onclick="setRole('sales')">✍️ 담당자 작성</button>
+      <button data-role="lead" onclick="setRole('lead')">👔 팀장</button>
+      <button data-role="head" onclick="setRole('head')">🏢 부서장</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- 담당자 작성 영역 -->
+    <div id="salesView"></div>
+    <!-- 팀장 대시보드 -->
+    <div id="leadView" class="hide"></div>
+    <!-- 부서장 대시보드 -->
+    <div id="headView" class="hide"></div>
+  </div>
+
+  <div class="nav hide" id="navBar">
+    <button class="btn btn-sec" id="btnPrev" onclick="step(-1)">이전</button>
+    <button class="btn btn-pri" id="btnNext" onclick="step(1)">다음</button>
+  </div>
+</div>
+<div id="toastHost"></div>
+<script>
+/* ===== 데이터 (서버 연동 시 fetch 로 대체) ===== */
+const DB = {"ag":[["A0066","모던항공여행사","공식인증예약센터","3등급","김지민C","영업11팀","영업2부"],["A0374","솔빛여행사","공식인증예약센터","3등급","오형석","영업1팀","영업1부"],["A0652","태평양리조트[해태]","공식인증예약센터","3등급","김성원","영업8팀","영업2부"],["A0667","초원여행","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A0711","(주)한양여행사","공식인증예약센터","1등급","김선우","영업8팀","영업2부"],["A0749","삼한레저관광","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A0865","새서울여행사","브랜드몰","1등급","김세윤","영업1팀","영업1부"],["A1122","여행문화","브랜드몰","1등급","정솔빈","영업1팀","영업1부"],["A1328","매일관광[춘천]","공식인증예약센터","3등급","박재영B","영업5팀","영업1부"],["A1330","치악관광여행사","공식인증예약센터","2등급","임창수","영업5팀","영업1부"],["A1335","한일여행사[춘천]","공식인증예약센터","4등급","박재영B","영업5팀","영업1부"],["A1451","시몽여행사","공식인증예약센터","3등급","김성원","영업8팀","영업2부"],["A1499","연승관광","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A1584","티와이티여행사","공식인증예약센터","3등급","김소윤B","영업7팀","영업2부"],["A1708","자인여행사","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A1767","아프로투어","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["A1777","명성관광[울산]","공식인증예약센터","4등급","김재윤","울산팀","영남영업부"],["A1845","브이아이피여행사[이마트 진주점]","공식인증예약센터","3등급","윤성범","경남팀","영남영업부"],["A1877","비너스여행사[부산]","공식인증예약센터","4등급","김홍열","부산2팀","영남영업부"],["A1900","상주성덕관광[상주]","공식인증예약센터","3등급","정철규","대구경북1팀","영남영업부"],["A1924","미션투어[대구남구]","공식인증예약센터","3등급","정철규","대구경북1팀","영남영업부"],["A1930","현대항공여행사[김천]","공식인증예약센터","3등급","이정열","대구경북1팀","영남영업부"],["A1944","엘리트여행사[대구]","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["A1953","이십일세기관광[안동]","공식인증예약센터","4등급","양건모","대구경북2팀","영남영업부"],["A1962","코끼리여행사[칠곡]","공식인증예약센터","4등급","양건모","대구경북2팀","영남영업부"],["A1997","계명항공여행사","공식인증예약센터","4등급","이정열","대구경북1팀","영남영업부"],["A2066","우방관광여행사[대구]","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["A2070","캔유여행사","공식인증예약센터","4등급","권성민","대구경북2팀","영남영업부"],["A2081","세운항공여행사[대구]","공식인증예약센터","3등급","양건모","대구경북2팀","영남영업부"],["A2222","세주여행사[김포]","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["A2272","그랜드항공여행[인천시청점]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A2283","현대항공[작전]","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["A2313","솔로몬여행사[인천]","공식인증예약센터","3등급","권준성","영업11팀","영업2부"],["A2453","여수한국관광여행사","공식인증예약센터","3등급","배정선","호남1팀","호남영업부"],["A2515","투어뱅크[광주]","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["A2602","보은고속관광여행사","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A2629","열린여행사[아산]","공식인증예약센터","3등급","정지민C","충청1팀","충청영업부"],["A2637","가나안국제항공여행사[청주]","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A2694","세계관광[천안]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A2779","금오관광[홍성]","공식인증예약센터","3등급","정지민C","충청1팀","충청영업부"],["A2787","우진관광[홍성]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A2816","알프스투어&골프","공식인증예약센터","1등급","노형진","충청1팀","충청영업부"],["A2943","국일항공여행사","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A2994","(유)대한관광","공식인증예약센터","4등급","김대운B","호남2팀","호남영업부"],["A3014","전주세중여행사","공식인증예약센터","3등급","김대운B","호남2팀","호남영업부"],["A3068","그랜드여행사[이마트 서수원점]","공식인증예약센터","3등급","김성수D","영업10팀","영업2부"],["A3164","하나관광여행사[이마트 오산점]","공식인증예약센터","1등급","김정은E","영업10팀","영업2부"],["A3197","화린여행사[이마트 과천점]","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A3245","조양관광[강릉]","공식인증예약센터","3등급","염현선","영업5팀","영업1부"],["A3249","파고다여행사","공식인증예약센터","4등급","염현선","영업5팀","영업1부"],["A3367","가든여행사[홈플러스 창원점]","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A3473","대한여행사[AK 분당점]","공식인증예약센터","1등급","권오윤","영업9팀","영업2부"],["A3474","드림관광[분당]","공식인증예약센터","3등급","이준현","영업9팀","영업2부"],["A3479","하나관광항공여행사[분당판교]","공식인증예약센터","3등급","이준현","영업9팀","영업2부"],["A3595","세주여행사","브랜드몰","Royal 등급","김세윤","영업1팀","영업1부"],["A3607","플러스항공여행사","공식인증예약센터","1등급","이찬호","영업1팀","영업1부"],["A4057","귀빈항공여행사[구미]","공식인증예약센터","4등급","김효진D","대구경북1팀","영남영업부"],["A4361","중국세계여행사","공식인증예약센터","3등급","김소윤B","영업7팀","영업2부"],["A4551","단양진양관광","공식인증예약센터","4등급","임창수","영업5팀","영업1부"],["A4722","예약불가대리점(TEST)","공식인증예약센터","1등급","전산실","공통플랫폼기획팀","IT온라인서비스부"],["A4889","건국항공여행사[춘천]","공식인증예약센터","2등급","박재영B","영업5팀","영업1부"],["A4974","금바다여행사[김해]","공식인증예약센터","4등급","빈기문","울산팀","영남영업부"],["A5042","하나여행사","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A5308","유진여행사 [밀양]","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A5353","진주무주테마여행사","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A5561","아이티여행사[이마트 광주점]","공식인증예약센터","3등급","윤준곤","호남1팀","호남영업부"],["A5607","여행문화전주지점","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A5657","한창여행사[부산]","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["A5697","융투어부산","공식인증예약센터","4등급","정용찬B","부산1팀","영남영업부"],["A5720","(주)하나여행사","공식인증예약센터","2등급","조성재","부산1팀","영남영업부"],["A5740","다모아여행사","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A5803","(주)투투항공여행사","공식인증예약센터","1등급","김선우","영업8팀","영업2부"],["A5978","하나로여행","공식인증예약센터","2등급","최형석","울산팀","영남영업부"],["A6064","하나여행사[이마트 포항이동점]","공식인증예약센터","3등급","김민우C","대구경북2팀","영남영업부"],["A6086","한빛여행사[금정]","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A6255","부산자유여행사","공식인증예약센터","4등급","김태수","부산2팀","영남영업부"],["A6446","새세중여행사","공식인증예약센터","2등급","임창수","영업5팀","영업1부"],["A6621","제주탑여행사","공식인증예약센터","4등급","현종민B","부산2팀","영남영업부"],["A6645","으뜸문화항공[부산]","공식인증예약센터","4등급","한무제","부산1팀","영남영업부"],["A6648","인터팩투어[홈플러스 서울상봉점]","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A6749","삼성고속관광","공식인증예약센터","4등급","빈기문","울산팀","영남영업부"],["A6969","장극여행사","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A7040","세운여행사[수원]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A7073","하나로투어여행사[청주]","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A7091","하나티엔에스","공식인증예약센터","3등급","이준현","영업9팀","영업2부"],["A7153","퍼시픽스타투어[롯데백화점 중동점]","공식인증예약센터","3등급","강준구","영업11팀","영업2부"],["A7173","하이투어[부산]","공식인증예약센터","4등급","최찬재","부산2팀","영남영업부"],["A7191","나이스투어[기장]","공식인증예약센터","4등급","이진석B","부산2팀","영남영업부"],["A7232","해피초이스투어","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A7234","토성관광[메가마트 동래점]","공식인증예약센터","","김홍열","부산2팀","영남영업부"],["A7333","투어플러스주식회사[롯데마트 노은점]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A7514","핑투어","공식인증예약센터","4등급","김성원","영업8팀","영업2부"],["A7588","하나로여행사","공식인증예약센터","4등급","윤성범","경남팀","영남영업부"],["A7604","통일여행사[이마트 속초점]","공식인증예약센터","4등급","염현선","영업5팀","영업1부"],["A7689","더베스트투어","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A7790","애니플여행사","공식인증예약센터","4등급","최형석","울산팀","영남영업부"],["A7867","서교여행사[수원]","공식인증예약센터","4등급","최은명","영업10팀","영업2부"],["A7975","이담여행사(주)","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A8050","나비투어","공식인증예약센터","3등급","장승민","영업1팀","영업1부"],["A8124","금호여행사[예산]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A8130","홍익여행사","공식인증예약센터","3등급","정용찬B","부산1팀","영남영업부"],["A8281","대호관광[화성]","공식인증예약센터","4등급","김성수D","영업10팀","영업2부"],["A8293","명문여행사","공식인증예약센터","4등급","빈기문","울산팀","영남영업부"],["A8324","한미관광여행사","공식인증예약센터","4등급","김민우C","대구경북2팀","영남영업부"],["A8512","명신고속관광","공식인증예약센터","4등급","정호원","경남팀","영남영업부"],["A8661","삼성해외여행[부산]","공식인증예약센터","4등급","최찬재","부산2팀","영남영업부"],["A8703","투어토크","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["A8710","가자여행사[뉴코아 인천점]","공식인증예약센터","2등급","김우진B","영업11팀","영업2부"],["A8736","남강비지니스트래블[김인옥]","공식인증예약센터","4등급","최은명","영업10팀","영업2부"],["A8753","가나항공여행사[충주]","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A8765","성화세계여행","공식인증예약센터","1등급","이충현","부산1팀","영남영업부"],["A8780","하나VIP","공식인증예약센터","3등급","김윤","영업1팀","영업1부"],["A8789","좋은우리들","공식인증예약센터","2등급","배정선","호남1팀","호남영업부"],["A8868","모아투어여행사(주)","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A8914","마로현관광","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A8943","태평양해외여행사[이마트 금정점]","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["A9056","맥여행사[의정부]","공식인증예약센터","3등급","이찬호","영업1팀","영업1부"],["A9223","동아항공[하나나이스]","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["A9229","래빗투어[부평]","공식인증예약센터","3등급","강준구","영업11팀","영업2부"],["A9242","나이스항공여행사","공식인증예약센터","3등급","최형석","울산팀","영남영업부"],["A9251","행복한여행자클럽[스타필드마켓 죽전점]","공식인증예약센터","2등급","김정은E","영업10팀","영업2부"],["A9301","여행세계로","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9761","하나항공여행사[구리]","공식인증예약센터","3등급","장승민","영업1팀","영업1부"],["A9846","(주)한빛여행","공식인증예약센터","2등급","박희환","영업7팀","영업2부"],["A9915","굿타임여행사","공식인증예약센터","4등급","염현선","영업5팀","영업1부"],["A99CL","구주","공식인증예약센터","1등급","김홍열","부산2팀","영남영업부"],["A99E3","더컴여행사[강남]","공식인증예약센터","2등급","김소윤B","영업7팀","영업2부"],["A99HV","삼화항공[상동]","공식인증예약센터","1등급","권준성","영업11팀","영업2부"],["A99M4","뉴남서울관광","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["A99MB","포유항공여행사(주)","공식인증예약센터","2등급","이화수","영업9팀","영업2부"],["A99MT","탑항공여행사","공식인증예약센터","3등급","염현선","영업5팀","영업1부"],["A99OF","하나여행사[반월]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A99OU","장수여행사","공식인증예약센터","4등급","김소윤B","영업7팀","영업2부"],["A99OZ","(주)하나클럽여행사","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["A99PJ","(주)투어아트[테크노마트점]","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["A99QO","문투어","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A99S8","프랜드투어","공식인증예약센터","2등급","노형진","충청1팀","충청영업부"],["A99XI","(주)하나토탈여행사","공식인증예약센터","3등급","장승민","영업1팀","영업1부"],["A9A0R","(주)미래투어","공식인증예약센터","1등급","정호원","경남팀","영남영업부"],["A9A1I","하나여행","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9A3F","엑스포관광여행사","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9A4G","두리항공여행사[조치원]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["A9A4H","해피투어(주)","공식인증예약센터","3등급","최은명","영업10팀","영업2부"],["A9A5K","(주)명보투어앤에듀","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A9A5T","마루투어","공식인증예약센터","4등급","염현선","영업5팀","영업1부"],["A9A6A","하나여행사[롯데몰 수지점]","공식인증예약센터","1등급","김정은E","영업10팀","영업2부"],["A9A8W","애플트리[중랑구청]","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9A8X","리더투어","브랜드몰","2등급","정솔빈","영업1팀","영업1부"],["A9AA8","한우리여행사[부산]","공식인증예약센터","1등급","박영훈","부산1팀","영남영업부"],["A9ABW","하나타임투어","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9AIX","드림항공여행사[대구]","공식인증예약센터","1등급","권성민","대구경북2팀","영남영업부"],["A9AJD","(주)드림스타트여행사","공식인증예약센터","3등급","박준희D","영업8팀","영업2부"],["A9AKO","굿모닝하나여행[이마트 평촌점]","공식인증예약센터","3등급","권오윤","영업9팀","영업2부"],["A9AL1","부산은성관광","공식인증예약센터","4등급","한무제","부산1팀","영남영업부"],["A9ALY","하나매니아[2001아울렛 중계점]","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["A9ANB","투어토탈여행사","공식인증예약센터","1등급","이승학","대구경북2팀","영남영업부"],["A9ANP","대일관광[충주]","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A9AQ8","세기항공여행사[NC유성점]","공식인증예약센터","1등급","노형진","충청1팀","충청영업부"],["A9AS0","(주)여행닷컴","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["A9AS2","여행세상[전주]","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A9ASQ","하나관광해외여행사","공식인증예약센터","4등급","최형석","울산팀","영남영업부"],["A9ASX","씨피여행사[부산]","공식인증예약센터","4등급","최찬재","부산2팀","영남영업부"],["A9ATJ","하나팩닷컴(주)","브랜드몰","2등급","정솔빈","영업1팀","영업1부"],["A9ATO","경대쌍마관광","공식인증예약센터","3등급","양건모","대구경북2팀","영남영업부"],["A9AW7","원하나트래블","공식인증예약센터","2등급","김정은E","영업10팀","영업2부"],["A9AWA","데이투어여행사","공식인증예약센터","3등급","김홍열","부산2팀","영남영업부"],["A9AWN","투어온[강남역]","브랜드몰","1등급","박희환","영업7팀","영업2부"],["A9AY7","포에버투어(주)","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9B11","코알라관광여행사[주]","공식인증예약센터","4등급","정호원","경남팀","영남영업부"],["A9B2F","우정고속관광여행사","공식인증예약센터","3등급","김성수D","영업10팀","영업2부"],["A9B36","여행세상[NC 일산점]","공식인증예약센터","1등급","김준한","영업1팀","영업1부"],["A9B37","부산투어여행사","공식인증예약센터","2등급","정호원","경남팀","영남영업부"],["A9B3T","하나패밀리투어","공식인증예약센터","1등급","장승민","영업1팀","영업1부"],["A9B72","하나패키지","공식인증예약센터","3등급","최관종B","호남2팀","호남영업부"],["A9B7D","미래투어[안산]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A9BAE","(주)호경관광여행사","공식인증예약센터","4등급","김홍열","부산2팀","영남영업부"],["A9BBL","하나플러스여행주식회사","공식인증예약센터","4등급","김홍열","부산2팀","영남영업부"],["A9BBM","나드리[노은점]","공식인증예약센터","1등급","김승원B","충청1팀","충청영업부"],["A9BF1","남강트레블서비스","브랜드몰","2등급","김세윤","영업1팀","영업1부"],["A9BGK","하나항공여행사[진천1]","공식인증예약센터","3등급","정의원","충청2팀","충청영업부"],["A9BGN","빅여행사","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["A9BHU","로얄드림투어[사하]","공식인증예약센터","3등급","조성재","부산1팀","영남영업부"],["A9BJ0","온누리[안산]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A9BJK","토마토여행(주)","공식인증예약센터","3등급","최찬재","부산2팀","영남영업부"],["A9BJP","하늘여행사[이천]","공식인증예약센터","2등급","김용섭C","영업5팀","영업1부"],["A9BKD","정훈항공여행사","공식인증예약센터","3등급","오형석","영업1팀","영업1부"],["A9BPU","하나드림여행사[현대백화점 미아점]","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["A9BQN","우리여행사[울산]","공식인증예약센터","4등급","최형석","울산팀","영남영업부"],["A9BRV","비전테마여행","공식인증예약센터","3등급","김선우","영업8팀","영업2부"],["A9BSS","(주)파고다관광여행사","공식인증예약센터","3등급","장승민","영업1팀","영업1부"],["A9BT6","특급서비스유통[분당]","공식인증예약센터","3등급","이화수","영업9팀","영업2부"],["A9BTM","갈릴리여행사[창원]","공식인증예약센터","3등급","배창선","경남팀","영남영업부"],["A9BZK","세진관광[광양만]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9C0I","제이플러스투어[헬리오시티]","공식인증예약센터","2등급","곽근우","영업9팀","영업2부"],["A9C55","딸기여행사","공식인증예약센터","4등급","이진석B","부산2팀","영남영업부"],["A9C59","누리마루여행","공식인증예약센터","3등급","정용찬B","부산1팀","영남영업부"],["A9C7M","주식회사 꿈의여행","브랜드몰","3등급","민유정","영업7팀","영업2부"],["A9C7Y","하나항공여행사","공식인증예약센터","4등급","김정은E","영업10팀","영업2부"],["A9C9J","일품투어","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9CA8","여로관광협동조합","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9CC5","부산대한여행사","공식인증예약센터","2등급","박영훈","부산1팀","영남영업부"],["A9CE2","하나항공[순천]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9CG6","범한항공여행[청주]","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A9CH1","투어프라미스여행사","공식인증예약센터","3등급","김소윤B","영업7팀","영업2부"],["A9CIS","산들여행사","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9CM5","해피투어[삼산]","공식인증예약센터","3등급","강준구","영업11팀","영업2부"],["A9CMA","(주)신아세계여행사","공식인증예약센터","1등급","빈기문","울산팀","영남영업부"],["A9CN9","매크로투어","공식인증예약센터","4등급","김성원","영업8팀","영업2부"],["A9CQ2","하나여행클럽[현대백화점 충청점]","공식인증예약센터","2등급","정의원","충청2팀","충청영업부"],["A9CR3","로마여행사","공식인증예약센터","4등급","이진석B","부산2팀","영남영업부"],["A9CY3","무비투어","공식인증예약센터","3등급","김윤","영업1팀","영업1부"],["A9CZK","즐거운여행사","공식인증예약센터","3등급","정의원","충청2팀","충청영업부"],["A9CZQ","하나항공여행","공식인증예약센터","4등급","김민우C","대구경북2팀","영남영업부"],["A9D0N","더프라임 투어","공식인증예약센터","4등급","유지호C","영업7팀","영업2부"],["A9D12","(주)우리여행사[포항]","공식인증예약센터","2등급","김민우C","대구경북2팀","영남영업부"],["A9D17","씨티에스비즈[분당]","공식인증예약센터","Royal 등급","곽근우","영업9팀","영업2부"],["A9D3Y","해피여행사[송도]","공식인증예약센터","4등급","김지민C","영업11팀","영업2부"],["A9D44","뉴월드컵고속관광여행사","공식인증예약센터","2등급","박재영B","영업5팀","영업1부"],["A9D4J","평화여행사","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["A9D5G","(주)중부여행사[롯데마트 석사점]","공식인증예약센터","3등급","박재영B","영업5팀","영업1부"],["A9D5N","유니버셜투어[롯데마트 화명점]","공식인증예약센터","1등급","최찬재","부산2팀","영남영업부"],["A9D5Q","초록여행사[이마트 산본점]","공식인증예약센터","3등급","이화수","영업9팀","영업2부"],["A9D60","투어뱅크[청주]","공식인증예약센터","Royal 등급","이미소D","충청2팀","충청영업부"],["A9D8S","하나여행[시흥]","공식인증예약센터","2등급","강준구","영업11팀","영업2부"],["A9D9S","오렌지투어(주)","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9DA1","주식회사 제이엘에이치인베스트먼트","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9DAY","구영애여행","공식인증예약센터","3등급","박영훈","부산1팀","영남영업부"],["A9DAZ","늘다올여행","공식인증예약센터","3등급","김태관","경남팀","영남영업부"],["A9DBG","투어라인여행사","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["A9DBN","이좋은여행사[이마트 마산점]","공식인증예약센터","2등급","배창선","경남팀","영남영업부"],["A9DBR","더블유투어","공식인증예약센터","2등급","정철규","대구경북1팀","영남영업부"],["A9DE3","미리내항공여행사","공식인증예약센터","4등급","강준구","영업11팀","영업2부"],["A9DEK","가람여행[오송보건의료행정타운점]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["A9DFY","현진드림투어","공식인증예약센터","4등급","한무제","부산1팀","영남영업부"],["A9DJ8","세민월드투어 여행사","공식인증예약센터","2등급","김소윤B","영업7팀","영업2부"],["A9DM3","해피버스투어","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9DME","아가타여행사[신촌]","공식인증예약센터","3등급","김준한","영업1팀","영업1부"],["A9DND","해피월드여행사[구미]","공식인증예약센터","2등급","김효진D","대구경북1팀","영남영업부"],["A9DR0","세진항공[인천]","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["A9DRK","범어투어","공식인증예약센터","1등급","이승학","대구경북2팀","영남영업부"],["A9DTQ","하모니여행사","공식인증예약센터","3등급","권준성","영업11팀","영업2부"],["A9DVK","대명여행사[무주]","공식인증예약센터","4등급","김대운B","호남2팀","호남영업부"],["A9DWT","하나웰여행사","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9DXQ","하나트래블[창원]","공식인증예약센터","4등급","김태관","경남팀","영남영업부"],["A9DYF","경일항공여행사[창원]","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A9DYP","여행사랑[홈플러스 울산중구점]","공식인증예약센터","2등급","최형석","울산팀","영남영업부"],["A9E0U","아름다운여행","공식인증예약센터","1등급","김정은E","영업10팀","영업2부"],["A9E4F","울산관광여행사[남구]","공식인증예약센터","3등급","김재윤","울산팀","영남영업부"],["A9E4G","여행사닷컴 주식회사","공식인증예약센터","4등급","정용찬B","부산1팀","영남영업부"],["A9E4Z","혜성여행사[범계]","공식인증예약센터","4등급","권오윤","영업9팀","영업2부"],["A9E55","로얄항공여행사[서산]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9E5V","월드항공여행사[서석동]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9E6O","웰빙트래블[금천]","공식인증예약센터","4등급","권오윤","영업9팀","영업2부"],["A9E9M","대원항공여행사[구미]","공식인증예약센터","4등급","이정열","대구경북1팀","영남영업부"],["A9EAT","가람여행사[이마트 봉선점]","공식인증예약센터","1등급","윤준곤","호남1팀","호남영업부"],["A9ECZ","오렌지여행사[강남]","공식인증예약센터","4등급","김소윤B","영업7팀","영업2부"],["A9EDC","나이스하나","브랜드몰","1등급","정솔빈","영업1팀","영업1부"],["A9EDM","투어비스타여행서비스","공식인증예약센터","3등급","김대운B","호남2팀","호남영업부"],["A9EDT","세계항공여행사[경주]","공식인증예약센터","3등급","정수빈B","울산팀","영남영업부"],["A9EEP","테마여행사[전남]","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["A9EIX","한국교육여행사","브랜드몰","3등급","김세윤","영업1팀","영업1부"],["A9EJ2","미소투어[가평]","공식인증예약센터","4등급","박준석","영업5팀","영업1부"],["A9EJA","대평원여행사","공식인증예약센터","3등급","안기범","대구경북1팀","영남영업부"],["A9EJR","나라여행[홈플러스 운정점]","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9EK4","보람여행사[산본점]","공식인증예약센터","3등급","권오윤","영업9팀","영업2부"],["A9EM5","하하투어","공식인증예약센터","2등급","민유정","영업7팀","영업2부"],["A9EOK","하나여행타운","공식인증예약센터","4등급","최찬재","부산2팀","영남영업부"],["A9EPZ","이투어몰[메타폴리스]","공식인증예약센터","2등급","김성수D","영업10팀","영업2부"],["A9EQW","일등여행사[신관]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9ERA","하니여행사[역삼]","브랜드몰","3등급","김소윤B","영업7팀","영업2부"],["A9ESL","아름다운비행[서부]","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9ESY","유매인터내셔널[롯데백화점 미아점]","브랜드몰","1등급","정솔빈","영업1팀","영업1부"],["A9ET0","하나여행사[제천]","공식인증예약센터","4등급","임창수","영업5팀","영업1부"],["A9ETA","하나여행사[안동]","공식인증예약센터","2등급","양건모","대구경북2팀","영남영업부"],["A9EUS","하늘여행[인천]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A9EWD","우리여행사[마산]","공식인증예약센터","3등급","박호준","경남팀","영남영업부"],["A9EZ0","서진여행사주식회사","공식인증예약센터","4등급","염현선","영업5팀","영업1부"],["A9F28","드림아일랜드[용인지점]","공식인증예약센터","3등급","최은명","영업10팀","영업2부"],["A9F4B","제일티엔씨[현대아울렛 송도점]","브랜드몰","3등급","김지민C","영업11팀","영업2부"],["A9F5K","빅필투어[이마트 광명소하점]","공식인증예약센터","3등급","강준구","영업11팀","영업2부"],["A9F5O","(주)여행친구","공식인증예약센터","2등급","김민우C","대구경북2팀","영남영업부"],["A9F7Z","프랜즈투어","공식인증예약센터","3등급","정지민C","충청1팀","충청영업부"],["A9F8A","글로벌여행사[울주군]","공식인증예약센터","3등급","빈기문","울산팀","영남영업부"],["A9F92","오리엔탈[이마트 명일점]","브랜드몰","Royal 등급","김세윤","영업1팀","영업1부"],["A9F9O","하늘여행사[이마트 안성점]","공식인증예약센터","2등급","김성수D","영업10팀","영업2부"],["A9FA1","둘리여행사","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9FAI","우리항공여행사[대전]","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["A9FDH","메이트항공여행사","공식인증예약센터","4등급","김지민C","영업11팀","영업2부"],["A9FDL","블루홀스관광여행사[천안]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9FFD","월드컵여행사[광주]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9FGR","통일관광주식회사[부여]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9FHX","승희여행사[산곡]","공식인증예약센터","3등급","김지민C","영업11팀","영업2부"],["A9FJE","투어컨설팅[화성]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A9FKC","게스트하우스","공식인증예약센터","3등급","조성재","부산1팀","영남영업부"],["A9FKF","여행자클럽[구리]","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["A9FKG","우리투어[남원]","공식인증예약센터","4등급","김대운B","호남2팀","호남영업부"],["A9FKO","하나제주여행[이마트 신제주점]","공식인증예약센터","3등급","현종민B","부산2팀","영남영업부"],["A9FMH","여행가기좋은날","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["A9FNO","일등여행사[대전]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9FNU","투어하나항공여행사","공식인증예약센터","2등급","정의원","충청2팀","충청영업부"],["A9FPP","세계여행[감곡]","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A9FQW","청담여행사[강남]","브랜드몰","2등급","김소윤B","영업7팀","영업2부"],["A9FR0","하나트레블센스","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A9FWA","대구하나세계일주","공식인증예약센터","4등급","양건모","대구경북2팀","영남영업부"],["A9FWS","모닝여행사","공식인증예약센터","4등급","최형석","울산팀","영남영업부"],["A9FWX","한국관광여행사[장전래미안]","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["A9FXS","에이케이투어주식회사","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9FZE","본에어코리아","공식인증예약센터","4등급","최은명","영업10팀","영업2부"],["A9G5M","투어메모리[이마트 목동점]","공식인증예약센터","3등급","김성원","영업8팀","영업2부"],["A9G7Y","즐거운여행[군산]","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A9G99","부천여행사[중동]","공식인증예약센터","4등급","강준구","영업11팀","영업2부"],["A9GBA","안나여행사[GS 대전도마점]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9GBH","영천항공여행사","공식인증예약센터","2등급","이승학","대구경북2팀","영남영업부"],["A9GCY","일산 하나여행사","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9GDD","미지로여행세상","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9GDN","한나여행사[홈플러스 영등포점]","공식인증예약센터","4등급","김선우","영업8팀","영업2부"],["A9GEA","(주)하나트래블","공식인증예약센터","4등급","한무제","부산1팀","영남영업부"],["A9GG0","보라여행사[순천]","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["A9GHQ","해피투어[롯데마트 상당점]","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["A9GKT","(주) 월투어[이마트 풍산점]","공식인증예약센터","3등급","이찬호","영업1팀","영업1부"],["A9GNI","현대관광","공식인증예약센터","3등급","배정선","호남1팀","호남영업부"],["A9GO0","하나트레블서비스","브랜드몰","2등급","김성원","영업8팀","영업2부"],["A9GQ9","현진여행사","공식인증예약센터","4등급","염현선","영업5팀","영업1부"],["A9GSN","하나비티에스[현대백화점 목동점]","공식인증예약센터","2등급","백지영","영업8팀","영업2부"],["A9GUQ","(주)트레디","공식인증예약센터","2등급","정호원","경남팀","영남영업부"],["A9GVE","투어게이트","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9GW2","아시아 여행사","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9GWN","비발디투어","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["A9H0D","투어나비","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9H1G","비바투어","공식인증예약센터","3등급","장승민","영업1팀","영업1부"],["A9H37","투어리스트[수원]","공식인증예약센터","1등급","최은명","영업10팀","영업2부"],["A9H3G","하나포천투어여행사","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9H3W","글로벌투어네트웍스","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9H3Y","아도여행사","공식인증예약센터","4등급","김성원","영업8팀","영업2부"],["A9H58","뉴스트래블[롯데마트 주엽점]","공식인증예약센터","3등급","이찬호","영업1팀","영업1부"],["A9H5Q","힐링스토리","브랜드몰","2등급","김세윤","영업1팀","영업1부"],["A9H68","미루트래블[이마트 신도림점]","공식인증예약센터","3등급","김성원","영업8팀","영업2부"],["A9H6L","지니투어[청주]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["A9H76","(주)선진해외여행사","공식인증예약센터","3등급","정수빈B","울산팀","영남영업부"],["A9H7K","(주)즐거운여행","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9H8K","(주)하나로투어","공식인증예약센터","3등급","최은명","영업10팀","영업2부"],["A9H8Z","럭스투어","공식인증예약센터","4등급","박희환","영업7팀","영업2부"],["A9HAH","여행산책[이마트 월배점]","공식인증예약센터","1등급","안기범","대구경북1팀","영남영업부"],["A9HAR","하나윈투어[이마트 하월곡점]","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["A9HD3","(주)여행사휴","공식인증예약센터","4등급","최형석","울산팀","영남영업부"],["A9HE0","투어메이트여행사","공식인증예약센터","3등급","정지민C","충청1팀","충청영업부"],["A9HJ5","여행이야기[롯데백화점 건대스타시티점]","공식인증예약센터","3등급","오형석","영업1팀","영업1부"],["A9HJY","새연여행사","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9HKT","제이여행사[이마트 안양점]","공식인증예약센터","3등급","이화수","영업9팀","영업2부"],["A9HLY","에이치디투어[현대백화점 킨텍스점]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9HM8","경인항공","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["A9HNL","에이스투어[용인시청]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A9HOY","장수하나여행사","공식인증예약센터","4등급","김대운B","호남2팀","호남영업부"],["A9HQ0","주식회사 교육여행","공식인증예약센터","4등급","김대운B","호남2팀","호남영업부"],["A9HQ3","글로벌코리아[구월 힐스테이트점]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A9HS8","정성여행사[스타필드 코엑스점]","공식인증예약센터","2등급","박희환","영업7팀","영업2부"],["A9HSC","아름다운여행사[NC 강서점]","공식인증예약센터","2등급","백지영","영업8팀","영업2부"],["A9HT2","코리아항공여행사[현풍]","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["A9HTS","투어센터","공식인증예약센터","1등급","노형진","충청1팀","충청영업부"],["A9HXM","티오피여행사","공식인증예약센터","2등급","이진석B","부산2팀","영남영업부"],["A9HZI","컬쳐메이트","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["A9I0A","손오공투어","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["A9I13","바시투어","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9I2T","나침반여행사[홈플러스 울산동구점]","브랜드몰","2등급","최찬재","부산2팀","영남영업부"],["A9I3H","터치더월드","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["A9I58","스카이투어[스타필드마켓 경산점]","브랜드몰","Royal 등급","이승학","대구경북2팀","영남영업부"],["A9I5P","하나더투어[이마트 수색점]","공식인증예약센터","3등급","김준한","영업1팀","영업1부"],["A9I5X","좋은느낌동행","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A9I60","(주)이든투어","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["A9I6R","디케이여행사[롯데마트 시화점]","공식인증예약센터","4등급","강준구","영업11팀","영업2부"],["A9I7A","미래관광여행사","공식인증예약센터","3등급","김대운B","호남2팀","호남영업부"],["A9I7E","푸른여행사","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A9I7F","가든투어[송파]","공식인증예약센터","3등급","곽근우","영업9팀","영업2부"],["A9I7L","이노항공여행사[인천]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A9I88","하늘여행사[부산]","공식인증예약센터","3등급","이진석B","부산2팀","영남영업부"],["A9I8D","동경여행사[포항]","공식인증예약센터","3등급","김민우C","대구경북2팀","영남영업부"],["A9I9J","하나서비스","공식인증예약센터","4등급","곽근우","영업9팀","영업2부"],["A9I9V","트래블버디","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9IAO","클럽모조[홈플러스 인하점]","브랜드몰","3등급","김우진B","영업11팀","영업2부"],["A9IC8","아이티여행사 수완점","공식인증예약센터","3등급","윤준곤","호남1팀","호남영업부"],["A9IDD","세계여행사[충주]","공식인증예약센터","2등급","정의원","충청2팀","충청영업부"],["A9IFA","에이스투어[일산위시티]","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9IFF","설레임여행사[익산]","공식인증예약센터","3등급","최관종B","호남2팀","호남영업부"],["A9IG6","전일관광","공식인증예약센터","3등급","김대운B","호남2팀","호남영업부"],["A9IG8","성진월드투어","공식인증예약센터","3등급","박준희D","영업8팀","영업2부"],["A9IGD","두드림투어","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9IJT","유민여행사","공식인증예약센터","4등급","이진석B","부산2팀","영남영업부"],["A9IJU","주원관광[전주]","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A9IKD","상아여행사","공식인증예약센터","1등급","김태관","경남팀","영남영업부"],["A9IO0","여행더하기","공식인증예약센터","3등급","김홍식","영업10팀","영업2부"],["A9IO8","샤인투어[울산]","공식인증예약센터","3등급","김재윤","울산팀","영남영업부"],["A9IR5","(주)애니투어","공식인증예약센터","3등급","오형석","영업1팀","영업1부"],["A9IRM","코리아투어[이마트 서산점]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9ITJ","하나비즈투어","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9ITR","하나마이스투어","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9IU5","한신여행사[대전]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9IV3","더월드투어","공식인증예약센터","3등급","양건모","대구경북2팀","영남영업부"],["A9IVD","아타여행사","공식인증예약센터","2등급","박준석","영업5팀","영업1부"],["A9IWM","스마일여행[구미]","공식인증예약센터","4등급","이정열","대구경북1팀","영남영업부"],["A9IWT","정투어[이마트 검단점]","공식인증예약센터","2등급","권준성","영업11팀","영업2부"],["A9IXB","다가투어 주식회사","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9IXJ","앤디여행사[군산]","공식인증예약센터","3등급","최관종B","호남2팀","호남영업부"],["A9IXU","에이엠투어","공식인증예약센터","3등급","김성수D","영업10팀","영업2부"],["A9IXV","오즈여행","공식인증예약센터","3등급","정지민C","충청1팀","충청영업부"],["A9IXX","오펀데이","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9IZ9","코리아여행사[둔산]","공식인증예약센터","1등급","이미소D","충청2팀","충청영업부"],["A9IZD","금당여행사","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9J06","사계절여행사[부여]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9J1A","여행스토리[청주]","공식인증예약센터","2등급","이미소D","충청2팀","충청영업부"],["A9J35","가자여행사[서산]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9J4Q","범한항공여행금왕점","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A9J50","진향여행사[롯데마트 여수점]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9J5P","스마트 투어","공식인증예약센터","3등급","배창선","경남팀","영남영업부"],["A9J6F","투어클럽[경주]","공식인증예약센터","3등급","정수빈B","울산팀","영남영업부"],["A9J7C","하나브이아이피투어[대구]","공식인증예약센터","3등급","정철규","대구경북1팀","영남영업부"],["A9J7F","더베스트투어[인천]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A9J81","에이치엔케이트래비즈","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9J89","골든투어","공식인증예약센터","2등급","김용섭C","영업5팀","영업1부"],["A9J9N","(주)전영민여행사","공식인증예약센터","4등급","김홍열","부산2팀","영남영업부"],["A9J9W","라임여행사","공식인증예약센터","3등급","최형석","울산팀","영남영업부"],["A9JCP","투어21[레이크꼬모]","공식인증예약센터","3등급","김성수D","영업10팀","영업2부"],["A9JCY","가자여행","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["A9JEB","다온투어[서초]","공식인증예약센터","3등급","박희환","영업7팀","영업2부"],["A9JEM","금동투어여행사","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9JFR","그랜드투어[대전]","공식인증예약센터","3등급","노형진","충청1팀","충청영업부"],["A9JHC","티유[이마트 김해점]","공식인증예약센터","3등급","최형석","울산팀","영남영업부"],["A9JKZ","엘투어[롯데백화점 노원점]","공식인증예약센터","1등급","윤상원B","영업1팀","영업1부"],["A9JL0","즐거운이야기","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9JL2","미래투어 주식회사[홈플러스 북수원점]","공식인증예약센터","3등급","최은명","영업10팀","영업2부"],["A9JLA","엘투어","공식인증예약센터","2등급","이화수","영업9팀","영업2부"],["A9JMY","유니투어[창원]","공식인증예약센터","4등급","김태관","경남팀","영남영업부"],["A9JS4","조은여행사[아산]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9JS9","올래투어[청주]","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["A9JSE","인코프","공식인증예약센터","3등급","노형진","충청1팀","충청영업부"],["A9JSF","휴앤조이트레블[이마트 남양주점]","공식인증예약센터","3등급","장승민","영업1팀","영업1부"],["A9JTS","허니문클럽[이마트 평택점]","공식인증예약센터","1등급","김정은E","영업10팀","영업2부"],["A9JUP","다래여행사","공식인증예약센터","4등급","김성원","영업8팀","영업2부"],["A9JVF","투어패밀리[이마트 만촌점]","공식인증예약센터","1등급","양건모","대구경북2팀","영남영업부"],["A9JX3","신동아항공여행사[진주]","공식인증예약센터","4등급","정호원","경남팀","영남영업부"],["A9JYB","누누로여행사[이마트 별내점]","공식인증예약센터","3등급","장승민","영업1팀","영업1부"],["A9JYH","성보여행사[홈플러스 김포점]","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["A9JYT","오션투어[대전]","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["A9JYW","하나샘투어","브랜드몰","2등급","김지민C","영업11팀","영업2부"],["A9JZ4","원이여행사","공식인증예약센터","4등급","김태관","경남팀","영남영업부"],["A9JZW","러빈드투어","공식인증예약센터","4등급","김태관","경남팀","영남영업부"],["A9K0Z","여행매니저[강남]","공식인증예약센터","3등급","김소윤B","영업7팀","영업2부"],["A9K1O","여행매니저닷컴","공식인증예약센터","3등급","김홍열","부산2팀","영남영업부"],["A9K28","윙메이트","브랜드몰","3등급","박희환","영업7팀","영업2부"],["A9K2D","하나조이","공식인증예약센터","3등급","김지민C","영업11팀","영업2부"],["A9K47","투어탑항공","공식인증예약센터","2등급","장승민","영업1팀","영업1부"],["A9K4J","라온투어[홈플러스 청주점]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["A9K5V","케이에이피투어","브랜드몰","Royal 등급","김세윤","영업1팀","영업1부"],["A9K6Y","레몬투어[홈플러스 영통점]","공식인증예약센터","4등급","최은명","영업10팀","영업2부"],["A9K7F","힐링투어[대구]","공식인증예약센터","3등급","안기범","대구경북1팀","영남영업부"],["A9K92","지구촌투어","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9K9K","부산항공여행사","공식인증예약센터","4등급","김홍열","부산2팀","영남영업부"],["A9KB8","트윈스여행사","공식인증예약센터","2등급","김재윤","울산팀","영남영업부"],["A9KBT","디어트래블","공식인증예약센터","3등급","노형진","충청1팀","충청영업부"],["A9KC3","월드퀸투어","공식인증예약센터","4등급","김성원","영업8팀","영업2부"],["A9KEG","트루일[홈플러스 간석점]","공식인증예약센터","4등급","김지민C","영업11팀","영업2부"],["A9KF2","하나투어재팬","공식인증예약센터","1등급","이찬호","영업1팀","영업1부"],["A9KFH","씨티투어[원주]","공식인증예약센터","2등급","임창수","영업5팀","영업1부"],["A9KFO","하나트래블[롯데마트 원주점]","공식인증예약센터","1등급","임창수","영업5팀","영업1부"],["A9KFP","가람여행사[수완점]","공식인증예약센터","2등급","윤준곤","호남1팀","호남영업부"],["A9KFW","케이에이피투어[이마트 의정부점]","공식인증예약센터","4등급","김세윤","영업1팀","영업1부"],["A9KG3","투어사랑[삼성]","공식인증예약센터","4등급","곽근우","영업9팀","영업2부"],["A9KG6","티아이엠코리아[홈플러스 청라점]","공식인증예약센터","4등급","김지민C","영업11팀","영업2부"],["A9KG8","명품여행사[부산]","공식인증예약센터","4등급","빈기문","울산팀","영남영업부"],["A9KHC","(주)예스투어[청주]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["A9KHO","온세상투어","공식인증예약센터","4등급","권오윤","영업9팀","영업2부"],["A9KI7","컨텐츠월드(주)","브랜드몰","1등급","정솔빈","영업1팀","영업1부"],["A9KJ0","케이오엠","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["A9KJB","우진여행사[인천]","공식인증예약센터","4등급","김지민C","영업11팀","영업2부"],["A9KJL","유닉투어","브랜드몰","1등급","권오윤","영업9팀","영업2부"],["A9KJO","비손투어","공식인증예약센터","4등급","조성재","부산1팀","영남영업부"],["A9KKT","투어디자인","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A9KL2","우리항공여행사[충주]","공식인증예약센터","2등급","정의원","충청2팀","충청영업부"],["A9KMK","편한여행사[경주]","공식인증예약센터","4등급","빈기문","울산팀","영남영업부"],["A9KNU","비발디투어[홈플러스 대전가오점]","공식인증예약센터","3등급","노형진","충청1팀","충청영업부"],["A9KON","은하수여행자","공식인증예약센터","2등급","이미소D","충청2팀","충청영업부"],["A9KOP","케이엘트래블[홈플러스 강동점]","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["A9KPF","미르투어[부산]","공식인증예약센터","3등급","최찬재","부산2팀","영남영업부"],["A9KPU","두레여행사[안동]","공식인증예약센터","4등급","양건모","대구경북2팀","영남영업부"],["A9KR6","단하나여행","공식인증예약센터","3등급","백지영","영업8팀","영업2부"],["A9KRA","예스여행[이마트 흥덕점]","공식인증예약센터","3등급","김홍식","영업10팀","영업2부"],["A9KRY","여행대장[롯데백화점 포항점]","공식인증예약센터","4등급","김민우C","대구경북2팀","영남영업부"],["A9KSS","힐링투어 남동","공식인증예약센터","3등급","김지민C","영업11팀","영업2부"],["A9KV1","자영투어","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9KV4","우리들여행사[롯데마트 여천점]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9KXT","유한월드투어","공식인증예약센터","4등급","김선우","영업8팀","영업2부"],["A9KXZ","세계관광여행사[갤러리아점]","공식인증예약센터","1등급","정지민C","충청1팀","충청영업부"],["A9KYQ","프라임여행사[성원그랜드타운]","공식인증예약센터","3등급","배창선","경남팀","영남영업부"],["A9KZ6","제이여행사[청주]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["A9KZB","(주)연세에듀투어","공식인증예약센터","4등급","권성민","대구경북2팀","영남영업부"],["A9KZI","도도투어[이마트 세종점]","브랜드몰","1등급","이미소D","충청2팀","충청영업부"],["A9L12","백두항공여행사","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A9L1L","한스트래블","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9L23","스카이트래블[강서]","공식인증예약센터","4등급","박준희D","영업8팀","영업2부"],["A9L57","그랜드여행사 하나비엔티[홈플러스 서수원]","브랜드몰","2등급","김성수D","영업10팀","영업2부"],["A9L5O","강일항공여행사[춘천]","공식인증예약센터","2등급","박준석","영업5팀","영업1부"],["A9L6H","어울림여행사","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["A9L6R","(주)하나여행[하나로마트 고양점]","공식인증예약센터","2등급","김준한","영업1팀","영업1부"],["A9L73","투어에프씨[홈플러스 킨텍스점]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9LA3","트래블리퍼블릭","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A9LCA","파란트래블[안동]","공식인증예약센터","3등급","양건모","대구경북2팀","영남영업부"],["A9LD0","에스엠(SM)여행사","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9LDH","ABC여행사","공식인증예약센터","4등급","김민우C","대구경북2팀","영남영업부"],["A9LDS","투어플러스[중부]","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9LDT","(주)하나월드[이마트 은평점]","공식인증예약센터","3등급","김준한","영업1팀","영업1부"],["A9LE1","투픽","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9LE8","유명한여행사","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9LES","케이엠트래블","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A9LFK","주식회사 투어닷컴","공식인증예약센터","3등급","정철규","대구경북1팀","영남영업부"],["A9LFP","행복여행사[이천]","공식인증예약센터","3등급","김용섭C","영업5팀","영업1부"],["A9LG0","투어랑","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["A9LHE","노블카운티투어","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["A9LJ0","엠제이여행사","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9LJ1","국제여행사[청송]","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["A9LKH","온투어세상","공식인증예약센터","2등급","오형석","영업1팀","영업1부"],["A9LL8","오예투어","공식인증예약센터","1등급","정솔빈","영업1팀","영업1부"],["A9LN1","혁신도시여행사","공식인증예약센터","4등급","김용섭C","영업5팀","영업1부"],["A9LN2","세계로투어","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["A9LNC","길투어","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["A9LNN","주식회사 퍼즐여행[롯데몰 은평점]","브랜드몰","2등급","김세윤","영업1팀","영업1부"],["A9LNY","나눔여행사[본점]","공식인증예약센터","1등급","김민우C","대구경북2팀","영남영업부"],["A9LQP","하나여행사[통영]","공식인증예약센터","4등급","김태관","경남팀","영남영업부"],["A9LR1","하나관광여행사[전북]","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A9LRG","에어비즈투어[스타필드마켓 일산점]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9LSH","리앤최투어[이마트 성남점]","공식인증예약센터","3등급","이준현","영업9팀","영업2부"],["A9LT2","스토리텔링투어[포항용흥점]","공식인증예약센터","4등급","김민우C","대구경북2팀","영남영업부"],["A9LTQ","네잎크로바관광여행사","공식인증예약센터","3등급","정지민C","충청1팀","충청영업부"],["A9LUB","더베이스투어[롯데마트 고양점]","공식인증예약센터","1등급","김준한","영업1팀","영업1부"],["A9LUJ","(주)퍼스트투어[대백프라자]","공식인증예약센터","2등급","김효진D","대구경북1팀","영남영업부"],["A9LUM","수여행사[롯데백화점 일산점]","공식인증예약센터","3등급","이찬호","영업1팀","영업1부"],["A9LV0","명투어","공식인증예약센터","3등급","김대운B","호남2팀","호남영업부"],["A9LVG","(주)라이드유에스투어","공식인증예약센터","3등급","김윤","영업1팀","영업1부"],["A9LWR","여행스토어","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["A9LWZ","대성투어[서울]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9LXL","부안세화관광여행사","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A9LY1","다인여행사[롯데마트 울산점]","공식인증예약센터","3등급","정수빈B","울산팀","영남영업부"],["A9LYT","여행시작[롯데백화점 구리점]","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["A9M0D","여행스토리[이마트 익산점]","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A9M0J","여행이야기[진주]","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A9M0X","하나퍼스트[서울]","공식인증예약센터","4등급","김소윤B","영업7팀","영업2부"],["A9M24","여행이야기","공식인증예약센터","3등급","김승원B","충청1팀","충청영업부"],["A9M27","라도스투어[롯데마트 월드컵점]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9M29","투어아울렛","공식인증예약센터","4등급","김용섭C","영업5팀","영업1부"],["A9M2G","올인원트레이닝[롯데마트 청라점]","공식인증예약센터","3등급","김지민C","영업11팀","영업2부"],["A9M3L","세화여행사","공식인증예약센터","3등급","김홍열","부산2팀","영남영업부"],["A9M3P","마이핏투어[NC 불광점]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9M4A","유니스투어[마포]","공식인증예약센터","1등급","장승민","영업1팀","영업1부"],["A9M4O","주식회사 하나플러스","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9M4S","문화투어","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["A9M5O","투어메이드","공식인증예약센터","1등급","이미소D","충청2팀","충청영업부"],["A9M7W","투어스토리[이마트 하남점]","공식인증예약센터","1등급","장승민","영업1팀","영업1부"],["A9M7Z","투어엠클럽","공식인증예약센터","4등급","강준구","영업11팀","영업2부"],["A9M93","제이컴퍼니투어","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["A9M9R","하나여행[홈플러스 월드컵점]","공식인증예약센터","2등급","이찬호","영업1팀","영업1부"],["A9MBN","하나멤버스[신세계 충청점]","공식인증예약센터","1등급","정지민C","충청1팀","충청영업부"],["A9MBZ","세주투어[롯데백화점 부산점]","공식인증예약센터","1등급","정용찬B","부산1팀","영남영업부"],["A9MCT","(주)더오름티앤에스","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9MDE","한웅","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["A9MDV","브이제이투어","공식인증예약센터","2등급","김윤","영업1팀","영업1부"],["A9ME6","충남해외관광[터미널점]","공식인증예약센터","3등급","노형진","충청1팀","충청영업부"],["A9ME9","디에이치코리아 배곧점","공식인증예약센터","3등급","강준구","영업11팀","영업2부"],["A9MEN","예약센터","공식인증예약센터","4등급","김선우","영업8팀","영업2부"],["A9MEY","하나플러스여행","공식인증예약센터","1등급","김윤","영업1팀","영업1부"],["A9MGL","이엔티투어[현대백화점 판교점]","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9MGM","제이케이투어","공식인증예약센터","4등급","최찬재","부산2팀","영남영업부"],["A9MIZ","짱투어","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["A9MKG","하나여행사[수영]","공식인증예약센터","3등급","이진석B","부산2팀","영남영업부"],["A9ML2","투어갤러리[창원]","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A9MLX","하나이엔비티","브랜드몰","Royal 등급","유지호C","영업7팀","영업2부"],["A9MMV","초이투어[현대백화점 천호점]","공식인증예약센터","3등급","김윤","영업1팀","영업1부"],["A9MN4","고투어[청담]","공식인증예약센터","4등급","유지호C","영업7팀","영업2부"],["A9MNF","황금여행사[청도]","공식인증예약센터","4등급","이승학","대구경북2팀","영남영업부"],["A9MOE","동창원투어","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A9MPP","첨단하나여행[롯데마트 첨단점]","공식인증예약센터","2등급","윤준곤","호남1팀","호남영업부"],["A9MQ3","케이엠트레블","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9MQF","우리투어","공식인증예약센터","4등급","정호원","경남팀","영남영업부"],["A9MQW","연우투어[홈플러스 면목점]","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["A9MR2","씨엘투어[이마트 화정점]","공식인증예약센터","1등급","이찬호","영업1팀","영업1부"],["A9MR3","내맘대로여행","공식인증예약센터","4등급","이충현","부산1팀","영남영업부"],["A9MR4","대한투어샵","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9MS4","하나티앤앰","공식인증예약센터","1등급","김윤","영업1팀","영업1부"],["A9MSU","여행의달인","브랜드몰","1등급","윤성범","경남팀","영남영업부"],["A9MT4","멤버쉽투어","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["A9MTM","제이에스투어[롯데백화점 잠실점]","공식인증예약센터","1등급","유지호C","영업7팀","영업2부"],["A9MTO","해일","공식인증예약센터","3등급","임창수","영업5팀","영업1부"],["A9MVG","베스트여행사[강릉]","공식인증예약센터","4등급","염현선","영업5팀","영업1부"],["A9MWT","투어핏","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9MWV","팬비즈여행사[국민대]","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["A9MY7","아이비투어","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["A9MYA","하나로여행사[강릉]","공식인증예약센터","3등급","염현선","영업5팀","영업1부"],["A9MZ3","새천년월드투어","공식인증예약센터","4등급","박준석","영업5팀","영업1부"],["A9MZF","와이앤제이[홈플러스 경기하남점]","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["A9N1G","이에스항공여행사","공식인증예약센터","3등급","김승원B","충청1팀","충청영업부"],["A9N1L","잇다투어","공식인증예약센터","3등급","김태관","경남팀","영남영업부"],["A9N1T","트래블하나","브랜드몰","1등급","노형진","충청1팀","충청영업부"],["A9N29","우리항공여행사[창원]","공식인증예약센터","4등급","배창선","경남팀","영남영업부"],["A9N3J","에스엠트래블 [수원]","공식인증예약센터","3등급","김홍식","영업10팀","영업2부"],["A9N46","DO DREAM[이마트 문현점]","브랜드몰","1등급","이충현","부산1팀","영남영업부"],["A9N55","우주여행사[고양]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9N5O","샤인투어(주)[이마트 춘천점]","공식인증예약센터","1등급","박준석","영업5팀","영업1부"],["A9N6T","알프스여행사 [부산]","공식인증예약센터","1등급","이진석B","부산2팀","영남영업부"],["A9N7X","플라잉투어[대전]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["A9N82","블레저","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["A9N8L","새창원투어","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["A9NAJ","민투어(MEAN TOUR)","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["A9NBN","퍼스트여행사[대구]","공식인증예약센터","4등급","이승학","대구경북2팀","영남영업부"],["A9NEQ","힐링투어[여수]","공식인증예약센터","3등급","윤준곤","호남1팀","호남영업부"],["A9NER","도련투어","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["A9NFH","주식회사 투어인트로","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9NGX","하나트립","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["A9NHJ","다온여행[더현대 대구]","공식인증예약센터","4등급","권성민","대구경북2팀","영남영업부"],["A9NHO","라온여행사[부천]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A9NIB","투어풀[동작]","공식인증예약센터","4등급","김성원","영업8팀","영업2부"],["A9NKC","울산하나원여행사","공식인증예약센터","3등급","김재윤","울산팀","영남영업부"],["A9NMI","캐슬투어[롯데마트 맥스금천점]","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["A9NO7","여가투어","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A9NPJ","아름여행사[이마트 화성봉담점]","공식인증예약센터","4등급","김성수D","영업10팀","영업2부"],["A9NQG","여행닷컴","브랜드몰","2등급","정솔빈","영업1팀","영업1부"],["A9NQI","투어피플[대전]","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["A9NQW","여행신화[대구]","공식인증예약센터","4등급","안기범","대구경북1팀","영남영업부"],["A9NS3","제일여행사[일산올림픽스포츠센터]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["A9NS7","투어라운지[대구]","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["A9NSB","그린투어[롯데마트 부산점]","공식인증예약센터","4등급","박영훈","부산1팀","영남영업부"],["A9NSJ","황금여행사","브랜드몰","1등급","권성민","대구경북2팀","영남영업부"],["A9NUI","우리투어[성남]","공식인증예약센터","2등급","곽근우","영업9팀","영업2부"],["A9NUS","라온투어[인천]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["A9NUW","지유투어","공식인증예약센터","4등급","현종민B","부산2팀","영남영업부"],["A9NVW","한성여행사[전남]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9NX9","투어클릭 다이렉트","공식인증예약센터","2등급","김준한","영업1팀","영업1부"],["A9NY1","망고나무","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["A9NYE","경남전세버스협동조합","공식인증예약센터","4등급","배창선","경남팀","영남영업부"],["A9NYO","하나트래블닷컴","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["A9NYZ","하나아일랜드","공식인증예약센터","3등급","박준희D","영업8팀","영업2부"],["A9NZ3","홈앤투어[홈플러스 원주점]","공식인증예약센터","4등급","김용섭C","영업5팀","영업1부"],["A9NZL","(주) 액티베이션","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["A9NZZ","(주)김도한여행사","공식인증예약센터","3등급","정호원","경남팀","영남영업부"],["A9O0A","(주)이룸여행사","공식인증예약센터","3등급","노형진","충청1팀","충청영업부"],["A9O2E","함께하는여행[홈플러스 전주효자점]","공식인증예약센터","4등급","최관종B","호남2팀","호남영업부"],["A9O2Y","반포서초투어","공식인증예약센터","2등급","민유정","영업7팀","영업2부"],["A9O3Z","메이플 해피투어[김해]","공식인증예약센터","4등급","정수빈B","울산팀","영남영업부"],["A9O5O","하나여행사[다대동]","공식인증예약센터","4등급","정용찬B","부산1팀","영남영업부"],["A9O7X","탑투어","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["A9O83","트래블클럽","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["A9O84","스마트투어[아산]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["PH00042","주원항공여행사[대전]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["PH00060","하나투어비즈니스[대명소노그룹]","공식인증예약센터","","손지혜","제휴영업팀","영업기획지원부"],["PH00277","굿타임여행사[에브리데이 탄현역점]","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["PH00480","(주)다나트립[홈플러스 금천점]","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["PH00686","뉴월드트래블[이마트 둔산점]","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["PH00857","주식회사 채널하나여행사","브랜드몰","3등급","정솔빈","영업1팀","영업1부"],["PH01088","가람T&C[홈플러스 중계점]","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["PH01147","하나트래블[중구]","공식인증예약센터","3등급","김윤","영업1팀","영업1부"],["PH01151","디에이치골프","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["PH01163","한빛투어[홈플러스 아시아드점]","공식인증예약센터","4등급","조성재","부산1팀","영남영업부"],["PH01167","티앤비 여행사","공식인증예약센터","4등급","박준석","영업5팀","영업1부"],["PH01300","가바투어","공식인증예약센터","3등급","빈기문","울산팀","영남영업부"],["PH01378","티엘투어(주)[트레이더스 동탄점]","공식인증예약센터","1등급","김홍식","영업10팀","영업2부"],["PH01409","한국투어라인주식회사","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["PH01411","브이아이피라운지","공식인증예약센터","2등급","정지민C","충청1팀","충청영업부"],["PH01573","위드트래블","공식인증예약센터","4등급","이충현","부산1팀","영남영업부"],["PH01593","나우여행","브랜드몰","2등급","백지영","영업8팀","영업2부"],["PH01709","공감여행사","공식인증예약센터","4등급","이진석B","부산2팀","영남영업부"],["PH01798","여필남(여행이필요할때 생각나는남자)","공식인증예약센터","4등급","이진석B","부산2팀","영남영업부"],["PH01831","마이투어[울산]","공식인증예약센터","4등급","김재윤","울산팀","영남영업부"],["PH01869","한아름여행사","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["PH01928","(주)봄봄투어","공식인증예약센터","3등급","권성민","대구경북2팀","영남영업부"],["PH01950","하나여행사[구미]","공식인증예약센터","3등급","이정열","대구경북1팀","영남영업부"],["PH01967","(주)에이플투어","공식인증예약센터","4등급","박준희D","영업8팀","영업2부"],["PH01998","지투어[수원]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["PH02058","여행은정연[현대백화점 중동점]","공식인증예약센터","2등급","강준구","영업11팀","영업2부"],["PH02068","조이플투어[대전]","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["PH02100","마이투어[청주]","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["PH02173","바른여행[홈플러스 동광주점]","공식인증예약센터","3등급","배정선","호남1팀","호남영업부"],["PH02180","하나앤투어","공식인증예약센터","1등급","윤상원B","영업1팀","영업1부"],["PH02279","우아한 여행","공식인증예약센터","4등급","임창수","영업5팀","영업1부"],["PH02483","자코트래블","공식인증예약센터","4등급","이화수","영업9팀","영업2부"],["PH02503","여행명가","공식인증예약센터","2등급","김윤","영업1팀","영업1부"],["PH02519","스마트투어[이마트 대전터미널점]","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["PH02526","하늬투어[홈플러스 구월점]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["PH02562","롯데투어[의정부]","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["PH02563","주식회사 오즈여행","공식인증예약센터","2등급","백지영","영업8팀","영업2부"],["PH02572","여행가","공식인증예약센터","2등급","이미소D","충청2팀","충청영업부"],["PH02575","지비앤투어","공식인증예약센터","4등급","유지호C","영업7팀","영업2부"],["PH02576","투어몬","브랜드몰","1등급","백지영","영업8팀","영업2부"],["PH02618","부산세중","공식인증예약센터","3등급","김홍열","부산2팀","영남영업부"],["PH02623","칸여행사[에브리데이 성주점]","공식인증예약센터","4등급","안기범","대구경북1팀","영남영업부"],["PH02665","조은여행[평택]","공식인증예약센터","4등급","김정은E","영업10팀","영업2부"],["PH02692","하나글로벌[부산]","브랜드몰","1등급","빈기문","울산팀","영남영업부"],["PH02736","온드림 여행사[홈플러스 분당오리점]","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["PH02764","두리투어[롯데마트 MAXX상무점]","공식인증예약센터","3등급","윤준곤","호남1팀","호남영업부"],["PH02793","브리즈투어[홈플러스 춘천점]","공식인증예약센터","4등급","박준석","영업5팀","영업1부"],["PH02794","정현투어","공식인증예약센터","4등급","박호준","경남팀","영남영업부"],["PH02851","하진투어","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["PH02870","여행일기[롯데마트 군산점]","공식인증예약센터","3등급","최관종B","호남2팀","호남영업부"],["PH02874","하나비즈&골프","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["PH02878","에스씨투어 여행사","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["PH02886","(주)라이프온투어","공식인증예약센터","2등급","한무제","부산1팀","영남영업부"],["PH02915","(유)좋은여행[롯데마트 수완점]","공식인증예약센터","2등급","윤준곤","호남1팀","호남영업부"],["PH02949","무학항공여행사","공식인증예약센터","4등급","윤성범","경남팀","영남영업부"],["PH03036","그랑프리투어","공식인증예약센터","2등급","김홍식","영업10팀","영업2부"],["PH03146","여행가자[롯데마트 김해점]","공식인증예약센터","3등급","정수빈B","울산팀","영남영업부"],["PH03175","스마일투어[광양]","공식인증예약센터","4등급","윤준곤","호남1팀","호남영업부"],["PH03205","일지매투어(주)","공식인증예약센터","4등급","김태관","경남팀","영남영업부"],["PH03208","추억상점","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["PH03271","웨바","공식인증예약센터","3등급","유지호C","영업7팀","영업2부"],["PH03292","하나지트래블[분당]","공식인증예약센터","4등급","곽근우","영업9팀","영업2부"],["PH03295","(주)하이투어","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["PH03442","가온여행사[대전]","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["PH03444","KT 전담 상담센터","공식인증예약센터","4등급","유지호C","영업7팀","영업2부"],["PH03464","충청레저앤여행","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["PH03474","투어라운지","브랜드몰","2등급","정지민C","충청1팀","충청영업부"],["PH03498","투어뱅크 주식회사[부산]","공식인증예약센터","4등급","김홍열","부산2팀","영남영업부"],["PH03510","(주)플래너","브랜드몰","1등급","정솔빈","영업1팀","영업1부"],["PH03515","주식회사 비타투어","브랜드몰","1등급","김성수D","영업10팀","영업2부"],["PH03529","트립나우","브랜드몰","2등급","김세윤","영업1팀","영업1부"],["PH03585","(주)아로하여행","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["PH03598","여행에진심 진투어","공식인증예약센터","4등급","김효진D","대구경북1팀","영남영업부"],["PH03613","허니투어[홈플러스 신도림점]","공식인증예약센터","4등급","김선우","영업8팀","영업2부"],["PH03645","(주)여행날다[더현대 서울]","공식인증예약센터","4등급","백지영","영업8팀","영업2부"],["PH03681","허니투어[부산]","공식인증예약센터","4등급","박영훈","부산1팀","영남영업부"],["PH03686","미소투어[홈플러스 광양점]","공식인증예약센터","4등급","배정선","호남1팀","호남영업부"],["PH03742","효도투어[구로]","공식인증예약센터","4등급","김선우","영업8팀","영업2부"],["PH03749","감성여행사[이마트 원주점]","공식인증예약센터","2등급","김용섭C","영업5팀","영업1부"],["PH03759","플래너[해군본부]","공식인증예약센터","4등급","서대웅","제휴영업팀","영업기획지원부"],["PH03777","투어그린[홈플러스 연수점]","공식인증예약센터","3등급","강준구","영업11팀","영업2부"],["PH03792","유유 T&W[홈플러스 잠실점]","공식인증예약센터","4등급","유지호C","영업7팀","영업2부"],["PH03809","레미투어[이마트 제천점]","공식인증예약센터","2등급","임창수","영업5팀","영업1부"],["PH03810","주식회사 투어라인","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["PH03815","미소여행사","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["PH03821","하랑여행사[홈플러스 진접점]","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["PH03829","드림온투어[커넥트현대]","공식인증예약센터","4등급","정용찬B","부산1팀","영남영업부"],["PH03840","래빗투어[이마트 계양점]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["PH03842","해피투어[홈플러스 인천논현점]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["PH03843","칠곡홈플투어[홈플러스 칠곡점]","공식인증예약센터","4등급","양건모","대구경북2팀","영남영업부"],["PH03846","이든트래블[이마트 묵동점]","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["PH03861","한그린[세이브존 노원점]","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["PH03889","제이에스투어[홈플러스 송도점]","공식인증예약센터","4등급","김지민C","영업11팀","영업2부"],["PH03907","올림투어[홈플러스 세종점]","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["PH03908","(주)티앤투어여행사[홈플러스 병점점]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["PH03909","투어리즘[홈플러스 의정부점]","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["PH03930","감승투어[롯데마트 구미점]","공식인증예약센터","1등급","김효진D","대구경북1팀","영남영업부"],["PH03938","여행예약센터[홈플러스 대구성서점]","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["PH04004","웰빙트래블[홈플러스 평촌점]","공식인증예약센터","3등급","권오윤","영업9팀","영업2부"],["PH04062","글로벌원투어[홈플러스 김해점]","공식인증예약센터","4등급","정수빈B","울산팀","영남영업부"],["PH04076","엠에스투어","공식인증예약센터","3등급","윤성범","경남팀","영남영업부"],["PH04111","(주)리컴퍼니","브랜드몰","1등급","정솔빈","영업1팀","영업1부"],["PH04152","내일여행(주)","공식인증예약센터","4등급","김태수","부산2팀","영남영업부"],["PH04168","여행마켓[광주]","공식인증예약센터","2등급","윤준곤","호남1팀","호남영업부"],["PH04170","(주)아이디어메이커","공식인증예약센터","4등급","빈기문","울산팀","영남영업부"],["PH04176","미라클[홈플러스 합정점]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["PH04178","헤이트립","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["PH04183","주식회사 신아","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["PH04201","하나인터내셔널 주식회사","공식인증예약센터","3등급","오형석","영업1팀","영업1부"],["PH04251","H.브릿지[트레이더스 연산점]","브랜드몰","1등급","이충현","부산1팀","영남영업부"],["PH04280","이화여행사","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["PH04288","주식회사 해피밸리","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["PH04406","주식회사 굿모닝여행","공식인증예약센터","3등급","정지민C","충청1팀","충청영업부"],["PH04539","도계투어스","공식인증예약센터","4등급","한무제","부산1팀","영남영업부"],["PH04551","하나여행&골프","공식인증예약센터","2등급","오형석","영업1팀","영업1부"],["PH04582","올데이트래블[롯데백화점 수원점]","공식인증예약센터","3등급","김홍식","영업10팀","영업2부"],["PH04741","꿈에그린 여행사","공식인증예약센터","4등급","강준구","영업11팀","영업2부"],["PH04776","주식회사 글로벌교육문화교류원","공식인증예약센터","4등급","김태관","경남팀","영남영업부"],["PH04817","더존투어[이마트 용인점]","공식인증예약센터","3등급","최은명","영업10팀","영업2부"],["PH04840","데이제로컴퍼니[홈플러스 센텀시티점]","공식인증예약센터","3등급","이진석B","부산2팀","영남영업부"],["PH04921","신화항공투어","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["PH04924","여행가는길[이마트 분당점]","공식인증예약센터","2등급","이준현","영업9팀","영업2부"],["PH05036","하나글로벌[양산]","공식인증예약센터","","빈기문","울산팀","영남영업부"],["PH05040","여행이야기[도마점]","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["PH05074","여행플래너[이마트 중동점]","브랜드몰","1등급","강준구","영업11팀","영업2부"],["PH05080","라호투어[홈플러스 방학점]","공식인증예약센터","3등급","윤상원B","영업1팀","영업1부"],["PH05117","주식회사 트립페이지","브랜드몰","1등급","김대근C","호남1팀","호남영업부"],["PH05227","라이언여행사 주식회사","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["PH05389","쏭투어[롯데백화점 전주점]","공식인증예약센터","1등급","김대운B","호남2팀","호남영업부"],["PH05412","주식회사 곽투어","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["PH05413","주식회사 트래블패키지","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["PH05414","콧바람여행사","공식인증예약센터","3등급","배창선","경남팀","영남영업부"],["PH05424","마이컴퍼니[홈플러스 고양터미널점]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["PH05474","(주)하율투어","공식인증예약센터","4등급","이준현","영업9팀","영업2부"],["PH05475","하나여행사[대구]","브랜드몰","1등급","김효진D","대구경북1팀","영남영업부"],["PH05488","(주)와이티투어[홈플러스 월곡점]","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["PH05501","스타항공여행사[이마트 반야월점]","공식인증예약센터","3등급","양건모","대구경북2팀","영남영업부"],["PH05528","주식회사 명품여행","공식인증예약센터","4등급","정의원","충청2팀","충청영업부"],["PH05549","주식회사 태현투어","공식인증예약센터","4등급","윤상원B","영업1팀","영업1부"],["PH05552","주식회사 신정항공여행[동작]","공식인증예약센터","4등급","박준희D","영업8팀","영업2부"],["PH05602","윙스투어","공식인증예약센터","3등급","권준성","영업11팀","영업2부"],["PH05603","조이스투어","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["PH05606","주식회사 오성투어[홈플러스 오창점]","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["PH05609","여행이행복한사람들","공식인증예약센터","3등급","김성수D","영업10팀","영업2부"],["PH05631","정투어[홈플러스 동수원점]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["PH05645","주식회사 유어투어","공식인증예약센터","3등급","최찬재","부산2팀","영남영업부"],["PH05738","하나트립[이마트 청계천점]","공식인증예약센터","2등급","오형석","영업1팀","영업1부"],["PH05760","주식회사 하나둘투어[홈플러스 작전점]","공식인증예약센터","4등급","김우진B","영업11팀","영업2부"],["PH05795","(주)여행의 온도","공식인증예약센터","1등급","노형진","충청1팀","충청영업부"],["PH05803","(주)여행의꿈","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["PH05823","주식회사 동광투어","공식인증예약센터","1등급","김우진B","영업11팀","영업2부"],["PH05863","오늘여행사","공식인증예약센터","4등급","노형진","충청1팀","충청영업부"],["PH05948","우주여행사","공식인증예약센터","4등급","김효진D","대구경북1팀","영남영업부"],["PH05950","주식회사 온리원여행사","공식인증예약센터","4등급","김성수D","영업10팀","영업2부"],["PH05960","(주)세종투어","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["PH05969","루덴스투어랩","공식인증예약센터","3등급","임창수","영업5팀","영업1부"],["PH05979","다니엘투어","공식인증예약센터","3등급","김성원","영업8팀","영업2부"],["PH06001","자유트래블[현대백화점 울산점]","공식인증예약센터","4등급","김재윤","울산팀","영남영업부"],["PH06105","(주)퍼플투어[부산]","공식인증예약센터","4등급","조성재","부산1팀","영남영업부"],["PH06114","명품여행사[양구]","공식인증예약센터","4등급","박준석","영업5팀","영업1부"],["PH06125","주식회사 원클릭투어","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["PH06183","(주)투어파크","공식인증예약센터","3등급","이미소D","충청2팀","충청영업부"],["PH06249","주식회사 비엠투어","공식인증예약센터","2등급","오형석","영업1팀","영업1부"],["PH06254","주식회사 베테랑투어","공식인증예약센터","4등급","이미소D","충청2팀","충청영업부"],["PH06273","(주)경진트립","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["PH06405","주식회사 너나들이","공식인증예약센터","3등급","노형진","충청1팀","충청영업부"],["PH06429","주식회사 소풍","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["PH06484","(주)드림패키지","브랜드몰","Royal 등급","백지영","영업8팀","영업2부"],["PH06513","탄탄투어 주식회사[홈플러스 신내점]","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["PH06540","영차투어[이마트 성서점]","공식인증예약센터","4등급","김효진D","대구경북1팀","영남영업부"],["PH06542","주식회사 은성트래블","공식인증예약센터","4등급","윤성범","경남팀","영남영업부"],["PH06548","황금여행사[롯데백화점 대구점]","공식인증예약센터","2등급","이승학","대구경북2팀","영남영업부"],["PH06550","(유)하늘교육여행사","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["PH06648","(주)삼송나비투어[하나로마트 삼송점]","공식인증예약센터","3등급","김준한","영업1팀","영업1부"],["PH06731","(주)시티에스[이마트 보령점]","공식인증예약센터","4등급","정지민C","충청1팀","충청영업부"],["PH06828","주식회사 디케이월드[롯데마트 사상점]","공식인증예약센터","4등급","조성재","부산1팀","영남영업부"],["PH06842","(주)아름다운여행[스타필드 안성점]","공식인증예약센터","4등급","김성수D","영업10팀","영업2부"],["PH06907","(주)좋은여행사[포항]","공식인증예약센터","3등급","김민우C","대구경북2팀","영남영업부"],["PH06961","독수리관광","공식인증예약센터","4등급","김윤","영업1팀","영업1부"],["PH06985","메모리투어[롯데마트 동래점]","공식인증예약센터","3등급","김태수","부산2팀","영남영업부"],["PH07036","주식회사 어나더트립","공식인증예약센터","2등급","장승민","영업1팀","영업1부"],["PH07051","(주)티아이커머스","공식인증예약센터","3등급","박희환","영업7팀","영업2부"],["PH07084","㈜서진투어몰","공식인증예약센터","1등급","이충현","부산1팀","영남영업부"],["PH07123","라이언여행사(주) 연무대지점","공식인증예약센터","4등급","김승원B","충청1팀","충청영업부"],["PH07207","주식회사 하나비전투어","공식인증예약센터","1등급","박준희D","영업8팀","영업2부"],["PH07234","위드트레블[고양]","공식인증예약센터","4등급","김준한","영업1팀","영업1부"],["PH07243","하나테마투어","공식인증예약센터","4등급","민유정","영업7팀","영업2부"],["PH07261","(주) 알찬여행사","공식인증예약센터","4등급","장승민","영업1팀","영업1부"],["PH07268","(주) 핑투어[이마트 수지점]","공식인증예약센터","3등급","김정은E","영업10팀","영업2부"],["PH07280","(주)퍼스트클래스코리아","공식인증예약센터","","송재현","제휴영업팀","영업기획지원부"],["PH07394","어바웃투어","공식인증예약센터","3등급","김선우","영업8팀","영업2부"],["PH07401","(주)여행가[트레이더스 비산점]","공식인증예약센터","4등급","정철규","대구경북1팀","영남영업부"],["PH07497","오션디티[스타필드마켓 동탄점]","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["PH07518","투어유니버스[홈플러스 부천여월점]","공식인증예약센터","4등급","권준성","영업11팀","영업2부"],["PH07554","주식회사 커넥트투어","공식인증예약센터","2등급","이미소D","충청2팀","충청영업부"],["PH07570","(주)플랜앤투어","공식인증예약센터","4등급","김홍식","영업10팀","영업2부"],["PH07582","스카이허브(주)","공식인증예약센터","4등급","김지민C","영업11팀","영업2부"],["PH07611","(주)디에이치트래블","공식인증예약센터","4등급","이찬호","영업1팀","영업1부"],["PH07659","(주)월드투어넷[롯데백화점 안산점]","공식인증예약센터","3등급","김홍식","영업10팀","영업2부"],["PH07762","(주)박사투어","공식인증예약센터","4등급","오형석","영업1팀","영업1부"],["PH07777","(주)오코마켓코리아","공식인증예약센터","4등급","정호원","경남팀","영남영업부"],["PH07800","투어라인[경기광주]","공식인증예약센터","","이준현","영업9팀","영업2부"],["PH07873","(주)하나관광여행","공식인증예약센터","3등급","배정선","호남1팀","호남영업부"],["PH08152","(주)어나더트립[개포]","공식인증예약센터","","유지호C","영업7팀","영업2부"],["PH08183","(유)디데이투어","공식인증예약센터","","배정선","호남1팀","호남영업부"],["PH08198","온드림 여행사[홈플러스 분당오리점]","공식인증예약센터","","이준현","영업9팀","영업2부"],["PH08246","티엘투어(주)[AK 평택점]","공식인증예약센터","","김정은E","영업10팀","영업2부"],["PH08247","(주)아름드리여행","공식인증예약센터","","김윤","영업1팀","영업1부"],["PH08285","여행이야기[롯데백화점 관악점]","공식인증예약센터","","오형석","영업1팀","영업1부"],["PH08290","디딤여행사","공식인증예약센터","","장승민","영업1팀","영업1부"]],"sales":[["윤경환","영업전략팀","영업기획지원부","윤경환","변면정"],["노동선","영업전략팀","영업기획지원부","윤경환","변면정"],["송성대","영업전략팀","영업기획지원부","윤경환","변면정"],["홍주영","영업전략팀","영업기획지원부","윤경환","변면정"],["노태성","영업전략팀","영업기획지원부","윤경환","변면정"],["박진한","영업전략팀","영업기획지원부","윤경환","변면정"],["신정재","영업전략팀","영업기획지원부","윤경환","변면정"],["이강일","영업전략팀","영업기획지원부","윤경환","변면정"],["홍유진","영업지원팀","영업기획지원부","홍유진","변면정"],["김민성","영업지원팀","영업기획지원부","홍유진","변면정"],["이지형","영업지원팀","영업기획지원부","홍유진","변면정"],["여은지","영업지원팀","영업기획지원부","홍유진","변면정"],["윤성환","영업지원팀","영업기획지원부","홍유진","변면정"],["황선우","영업지원팀","영업기획지원부","홍유진","변면정"],["이민규","제휴영업팀","영업기획지원부","이민규","변면정"],["강다영","제휴영업팀","영업기획지원부","이민규","변면정"],["박정하","제휴영업팀","영업기획지원부","이민규","변면정"],["서대웅","제휴영업팀","영업기획지원부","이민규","변면정"],["송재현","제휴영업팀","영업기획지원부","이민규","변면정"],["오태근","제휴영업팀","영업기획지원부","이민규","변면정"],["이경묵","제휴영업팀","영업기획지원부","이민규","변면정"],["김윤원","제휴영업팀","영업기획지원부","이민규","변면정"],["손지혜","제휴영업팀","영업기획지원부","이민규","변면정"],["고은비","법인지원팀","영업기획지원부","","변면정"],["권오상","법인지원팀","영업기획지원부","","변면정"],["박선희","법인지원팀","영업기획지원부","","변면정"],["사영준","법인지원팀","영업기획지원부","","변면정"],["신정애","법인지원팀","영업기획지원부","","변면정"],["신정임","법인지원팀","영업기획지원부","","변면정"],["이길현","법인지원팀","영업기획지원부","","변면정"],["이은진","법인지원팀","영업기획지원부","","변면정"],["이준희","법인지원팀","영업기획지원부","","변면정"],["채경은","법인지원팀","영업기획지원부","","변면정"],["한상훈","법인지원팀","영업기획지원부","","변면정"],["박정아","법인지원팀","영업기획지원부","","변면정"],["신지윤","법인지원팀","영업기획지원부","","변면정"],["이윤하","법인지원팀","영업기획지원부","","변면정"],["정선화","법인지원팀","영업기획지원부","","변면정"],["천아령","법인지원팀","영업기획지원부","","변면정"],["최정수","영업1팀","영업1부","최정수","김창회"],["김세윤","영업1팀","영업1부","최정수","김창회"],["김윤","영업1팀","영업1부","최정수","김창회"],["김준한","영업1팀","영업1부","최정수","김창회"],["오형석","영업1팀","영업1부","최정수","김창회"],["윤상원","영업1팀","영업1부","최정수","김창회"],["이찬호","영업1팀","영업1부","최정수","김창회"],["장승민","영업1팀","영업1부","최정수","김창회"],["정솔빈","영업1팀","영업1부","최정수","김창회"],["이수길","영업2팀","영업1부","이수길","김창회"],["김지현","영업2팀","영업1부","이수길","김창회"],["정경래","영업2팀","영업1부","이수길","김창회"],["김기웅","영업2팀","영업1부","이수길","김창회"],["김남용","영업2팀","영업1부","이수길","김창회"],["김미소","영업2팀","영업1부","이수길","김창회"],["류민우","영업2팀","영업1부","이수길","김창회"],["장채원","영업2팀","영업1부","이수길","김창회"],["왕유빈","영업2팀","영업1부","이수길","김창회"],["김재훈","영업3팀","영업1부","김재훈","김창회"],["김경섭","영업3팀","영업1부","김재훈","김창회"],["이수환","영업3팀","영업1부","김재훈","김창회"],["조용대","영업3팀","영업1부","김재훈","김창회"],["박상현","영업3팀","영업1부","김재훈","김창회"],["박재찬","영업3팀","영업1부","김재훈","김창회"],["이동현","영업3팀","영업1부","김재훈","김창회"],["우동균","영업3팀","영업1부","김재훈","김창회"],["서기민","영업4팀","영업1부","서기민","김창회"],["김태완","영업4팀","영업1부","서기민","김창회"],["문창기","영업4팀","영업1부","서기민","김창회"],["설영진","영업4팀","영업1부","서기민","김창회"],["고성범","영업4팀","영업1부","서기민","김창회"],["김경윤","영업4팀","영업1부","서기민","김창회"],["박현호","영업4팀","영업1부","서기민","김창회"],["신찬경","영업4팀","영업1부","서기민","김창회"],["곽승안","영업5팀","영업1부","곽승안","김창회"],["박재영","영업5팀","영업1부","곽승안","김창회"],["박준석","영업5팀","영업1부","곽승안","김창회"],["임창수","영업5팀","영업1부","곽승안","김창회"],["김용섭","영업5팀","영업1부","곽승안","김창회"],["염현선","영업5팀","영업1부","곽승안","김창회"],["이영기","영업7팀","영업2부","이영기","서민구"],["김광훈","영업7팀","영업2부","이영기","서민구"],["김소윤","영업7팀","영업2부","이영기","서민구"],["김준태","영업7팀","영업2부","이영기","서민구"],["민유정","영업7팀","영업2부","이영기","서민구"],["박희환","영업7팀","영업2부","이영기","서민구"],["유지호","영업7팀","영업2부","이영기","서민구"],["정효석","영업7팀","영업2부","이영기","서민구"],["김지연","영업8팀","영업2부","김지연","서민구"],["서봉진","영업8팀","영업2부","김지연","서민구"],["임정혁","영업8팀","영업2부","김지연","서민구"],["김선우","영업8팀","영업2부","김지연","서민구"],["김성원","영업8팀","영업2부","김지연","서민구"],["박준희","영업8팀","영업2부","김지연","서민구"],["백지영","영업8팀","영업2부","김지연","서민구"],["이지석","영업8팀","영업2부","김지연","서민구"],["조기훈","영업9팀","영업2부","조기훈","서민구"],["이원진","영업9팀","영업2부","조기훈","서민구"],["이화수","영업9팀","영업2부","조기훈","서민구"],["정일환","영업9팀","영업2부","조기훈","서민구"],["곽근우","영업9팀","영업2부","조기훈","서민구"],["권오윤","영업9팀","영업2부","조기훈","서민구"],["남기산","영업9팀","영업2부","조기훈","서민구"],["이준현","영업9팀","영업2부","조기훈","서민구"],["서민호","영업10팀","영업2부","서민호","서민구"],["심재호","영업10팀","영업2부","서민호","서민구"],["이지훈","영업10팀","영업2부","서민호","서민구"],["김성수","영업10팀","영업2부","서민호","서민구"],["김정은","영업10팀","영업2부","서민호","서민구"],["김홍식","영업10팀","영업2부","서민호","서민구"],["방승일","영업10팀","영업2부","서민호","서민구"],["최은명","영업10팀","영업2부","서민호","서민구"],["김태현","영업11팀","영업2부","김태현","서민구"],["박형주","영업11팀","영업2부","김태현","서민구"],["윤성만","영업11팀","영업2부","김태현","서민구"],["이인재","영업11팀","영업2부","김태현","서민구"],["강준구","영업11팀","영업2부","김태현","서민구"],["권준성","영업11팀","영업2부","김태현","서민구"],["김우진","영업11팀","영업2부","김태현","서민구"],["김지민","영업11팀","영업2부","김태현","서민구"],["강인환","충청1팀","충청영업부","강인환","어정수"],["권종현","충청1팀","충청영업부","강인환","어정수"],["김승원","충청1팀","충청영업부","강인환","어정수"],["노형진","충청1팀","충청영업부","강인환","어정수"],["임경훈","충청1팀","충청영업부","강인환","어정수"],["전정민","충청1팀","충청영업부","강인환","어정수"],["정지민","충청1팀","충청영업부","강인환","어정수"],["이민욱","충청1팀","충청영업부","강인환","어정수"],["김병기","충청2팀","충청영업부","김병기","어정수"],["노현진","충청2팀","충청영업부","김병기","어정수"],["이미소","충청2팀","충청영업부","김병기","어정수"],["김현민","충청2팀","충청영업부","김병기","어정수"],["이준명","충청2팀","충청영업부","김병기","어정수"],["정의원","충청2팀","충청영업부","김병기","어정수"],["배정선","호남1팀","호남영업부","","신태균"],["선진이","호남1팀","호남영업부","","신태균"],["윤준곤","호남1팀","호남영업부","","신태균"],["홍제선","호남1팀","호남영업부","","신태균"],["김대근","호남1팀","호남영업부","","신태균"],["문태호","호남1팀","호남영업부","","신태균"],["최성주","호남1팀","호남영업부","","신태균"],["박노철","호남2팀","호남영업부","","신태균"],["최관종","호남2팀","호남영업부","","신태균"],["김대운","호남2팀","호남영업부","","신태균"],["박민호","부산1팀","영남영업부","박민호","장일우"],["박영훈","부산1팀","영남영업부","박민호","장일우"],["이충현","부산1팀","영남영업부","박민호","장일우"],["한무제","부산1팀","영남영업부","박민호","장일우"],["정용찬","부산1팀","영남영업부","박민호","장일우"],["조성재","부산1팀","영남영업부","박민호","장일우"],["이승택","부산2팀","영남영업부","이승택","장일우"],["김태수","부산2팀","영남영업부","이승택","장일우"],["김홍열","부산2팀","영남영업부","이승택","장일우"],["조윤우","부산2팀","영남영업부","이승택","장일우"],["이진석","부산2팀","영남영업부","이승택","장일우"],["최찬재","부산2팀","영남영업부","이승택","장일우"],["현종민","부산2팀","영남영업부","이승택","장일우"],["장태은","울산팀","영남영업부","장태은","장일우"],["김재윤","울산팀","영남영업부","장태은","장일우"],["빈기문","울산팀","영남영업부","장태은","장일우"],["박준영","울산팀","영남영업부","장태은","장일우"],["정수빈","울산팀","영남영업부","장태은","장일우"],["최형석","울산팀","영남영업부","장태은","장일우"],["이동훈","대구경북1팀","영남영업부","이동훈","장일우"],["정철규","대구경북1팀","영남영업부","이동훈","장일우"],["최경득","대구경북1팀","영남영업부","이동훈","장일우"],["김효진","대구경북1팀","영남영업부","이동훈","장일우"],["안기범","대구경북1팀","영남영업부","이동훈","장일우"],["이정열","대구경북1팀","영남영업부","이동훈","장일우"],["박용성","대구경북2팀","영남영업부","박용성","장일우"],["이승학","대구경북2팀","영남영업부","박용성","장일우"],["권성민","대구경북2팀","영남영업부","박용성","장일우"],["김민우","대구경북2팀","영남영업부","박용성","장일우"],["박선정","대구경북2팀","영남영업부","박용성","장일우"],["양건모","대구경북2팀","영남영업부","박용성","장일우"],["김태준","경남팀","영남영업부","김태준","장일우"],["배창선","경남팀","영남영업부","김태준","장일우"],["윤성범","경남팀","영남영업부","김태준","장일우"],["김태관","경남팀","영남영업부","김태준","장일우"],["박호준","경남팀","영남영업부","김태준","장일우"],["정호원","경남팀","영남영업부","김태준","장일우"],["탁영인","경남팀","영남영업부","김태준","장일우"]],"tl":{"영업전략팀":"윤경환","영업지원팀":"홍유진","제휴영업팀":"이민규","영업1팀":"최정수","영업2팀":"이수길","영업3팀":"김재훈","영업4팀":"서기민","영업5팀":"곽승안","영업7팀":"이영기","영업8팀":"김지연","영업9팀":"조기훈","영업10팀":"서민호","영업11팀":"김태현","충청1팀":"강인환","충청2팀":"김병기","부산1팀":"박민호","부산2팀":"이승택","울산팀":"장태은","대구경북1팀":"이동훈","대구경북2팀":"박용성","경남팀":"김태준"},"dh":{"영업기획지원부":"변면정","영업1부":"김창회","영업2부":"서민구","충청영업부":"어정수","호남영업부":"신태균","영남영업부":"장일우"}};
+// DB.ag = [code,name,type,grade,manager,team,dept], DB.sales=[name,team,dept,teamLead,deptHead]
+// DB.tl = {팀:팀장}, DB.dh = {부:부서장}
+
+const AG = DB.ag.map(a=>({code:a[0],name:a[1],type:a[2],grade:a[3],manager:a[4],team:a[5],dept:a[6]}));
+/* 제외할 부서 (작성/대시보드 모두에서 숨김) */
+const EXCLUDE_DEPTS=['영업기획지원부'];
+const SALES = DB.sales.map(s=>({name:s[0],team:s[1],dept:s[2],teamLead:s[3],deptHead:s[4]}))
+  .filter(s=>!EXCLUDE_DEPTS.includes(s.dept))
+  .sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+const TL = DB.tl, DH = DB.dh;
+/* 부서 표시 순서(지정 순서 우선, 나머지는 뒤에) */
+const DEPT_ORDER=['영업1부','영업2부','충청영업부','호남영업부','영남영업부'];
+
+/* 동명이인 접미사(A/B/C…) 제거 후 비교: '윤상원B' === '윤상원' */
+function normName(n){ return (n||'').replace(/[A-Z]+$/,'').trim(); }
+/* 담당자(me)의 담당 대리점: 이름 정규화 + 같은 팀 우선 매칭 */
+function myAgencies(){
+  if(!me) return [];
+  const n = normName(me.name);
+  return AG.filter(a=> normName(a.manager)===n && (a.team===me.team || a.team===''||!a.team));
+}
+
+/* 제출 데이터 저장소 (실제 환경: 서버/실시간DB). 데모: 메모리 + 샘플 */
+let REPORTS = seedSample();
+
+/* ===== 상태 ===== */
+let role='sales';
+let curStep=0;
+let myDept=null;       // 선택한 부서
+let myTeam=null;       // 선택한 팀
+let me=null;           // 현재 담당자
+let form=resetForm();
+
+function resetForm(){
+  return {
+    agencies:[],          // 선택 대리점 code 배열
+    target:'lead',        // 'lead' | 'leaddept'
+    sections:{promo:false,inc:false,note:false,etc:false},
+    promo:{name:'',channel:'',count:0,reach:0,bookings:0,amount:0,result:'중',memo:''},
+    inc:{signed:[],unsigned:[],signedAmt:0,signNote:'',unsignNote:''},
+    note:{text:'',urgency:'보통'},
+    etc:{text:''}
+  };
+}
+
+const STEPS=['부서 선택','팀 선택','담당자 · 대리점','보고 항목','내용 작성','검토 & 제출'];
+
+/* ===== 초기화 ===== */
+document.getElementById('todayLbl').textContent = fmtDate(new Date());
+renderSales();
+
+function setRole(r){
+  role=r;
+  document.querySelectorAll('.role-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.role===r));
+  document.getElementById('salesView').classList.toggle('hide',r!=='sales');
+  document.getElementById('leadView').classList.toggle('hide',r!=='lead');
+  document.getElementById('headView').classList.toggle('hide',r!=='head');
+  document.getElementById('navBar').classList.add('hide');
+  if(r==='lead') renderLead();
+  if(r==='head') renderHead();
+  if(r==='sales') renderSales();
+}
+
+/* ============================================================
+   담당자 작성 (스텝 위저드)
+   ============================================================ */
+function renderSales(){
+  const host=document.getElementById('salesView');
+  const pct = Math.round((curStep)/(STEPS.length-1)*100);
+  let html = `<div class="prog"><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="pct">${pct}%</div></div>`;
+  html += breadcrumb();
+  html += `<div class="card">`;
+  html += `<div class="step-head"><div class="step-num">${curStep+1}</div><div><h2>${STEPS[curStep]}</h2><div class="d">${stepDesc(curStep)}</div></div></div>`;
+  html += stepBody(curStep);
+  // 카드 내부 인라인 진행 버튼 (자동진행 단계 제외) — 하단 고정바가 안 보일 때도 항상 누를 수 있게
+  const inlineAuto = (curStep===0 || curStep===1);
+  if(!inlineAuto){
+    const okNow = canNext();
+    const lbl = curStep===STEPS.length-1 ? '제출하기 ✓' : '다음 →';
+    html += `<div class="inline-nav">
+      ${curStep>0?`<button class="btn btn-sec" onclick="step(-1)">← 이전</button>`:''}
+      <button class="btn btn-pri ${okNow?'ready':''}" ${okNow?'':'disabled'} onclick="step(1)">${lbl}</button>
+    </div>`;
+  }
+  html += `</div>`;
+  host.innerHTML = html;
+  // 하단 고정 네비바는 사용하지 않음 (카드 내부 인라인 버튼으로 대체 — 모바일에서 안정적)
+  document.getElementById('navBar').classList.add('hide');
+  bindStep(curStep);
+}
+
+function stepDesc(s){
+  return ['소속 부서를 선택하세요','부서 내 팀을 선택하세요','담당자 본인과 대리점 선택','보고 대상 + 보고할 항목 선택','각 항목 내용을 입력','보고 대상에게 실시간 전송'][s];
+}
+
+/* 상단 브레드크럼: 클릭하면 해당 단계로 이동 */
+function breadcrumb(){
+  const parts=[];
+  parts.push({label: myDept?('🏢 '+myDept):'🏢 부서', step:0, on:!!myDept});
+  if(myDept) parts.push({label: myTeam?('👥 '+myTeam):'👥 팀', step:1, on:!!myTeam});
+  if(myTeam) parts.push({label: me?('👤 '+me.name):'👤 담당자', step:2, on:!!me});
+  if(parts.length<=1 && !myDept) return ''; // 첫 화면엔 숨김
+  let h='<div class="bcrumb">';
+  parts.forEach((p,i)=>{
+    if(i>0) h+='<span class="bc-sep">›</span>';
+    const cls = p.on?'bc-link':'bc-link bc-empty';
+    h+=`<button class="${cls} ${curStep===p.step?'cur':''}" onclick="gotoStep(${p.step})">${p.label}</button>`;
+  });
+  h+='</div>';
+  return h;
+}
+function gotoStep(s){
+  if(s>curStep) return;          // 브레드크럼으로는 앞 단계로만 이동(되돌아가기)
+  curStep=s;
+  renderSales(); window.scrollTo(0,0);
+}
+
+function stepBody(s){
+  if(s===0) return bodyDept();
+  if(s===1) return bodyTeam();
+  if(s===2) return bodyMember();
+  if(s===3) return bodySections();
+  if(s===4) return bodyContent();
+  if(s===5) return bodyReview();
+}
+
+/* --- 부서 > 팀 구조 (담당자가 존재하는 팀만) --- */
+function deptTeamMap(){
+  const m={};
+  SALES.forEach(s=>{ if(!m[s.dept])m[s.dept]={}; m[s.dept][s.team]=true; });
+  return m;
+}
+/* 부서 표시 순서(지정 순서 우선, 나머지는 뒤에) */
+function sortDepts(arr){
+  return arr.slice().sort((a,b)=>{
+    let ia=DEPT_ORDER.indexOf(a), ib=DEPT_ORDER.indexOf(b);
+    if(ia<0) ia=DEPT_ORDER.length; if(ib<0) ib=DEPT_ORDER.length;
+    return ia-ib || a.localeCompare(b,'ko');
+  });
+}
+
+/* --- STEP1: 부서 선택 --- */
+function bodyDept(){
+  const dtm = deptTeamMap();
+  const depts = sortDepts(Object.keys(dtm));
+  let h = `<label>소속 부서 <span class="req">*</span> <span class="auto-hint">선택하면 자동으로 넘어갑니다</span></label><div class="big-pick">`;
+  depts.forEach(d=>{
+    const cnt = SALES.filter(s=>s.dept===d).length;
+    const teams = Object.keys(dtm[d]).length;
+    h += `<button class="big-chip ${myDept===d?'on':''}" onclick="pickDept('${d}')">
+      <span class="bc-ic">🏢</span><span class="bc-t">${d}</span>
+      <span class="bc-s">${teams}개 팀 · ${cnt}명</span></button>`;
+  });
+  h += `</div>`;
+  return h;
+}
+function pickDept(d){
+  myDept=d; myTeam=null; me=null; form.agencies=[];
+  curStep=1;                 // 부서 고르면 바로 팀 선택 단계로
+  renderSales(); window.scrollTo(0,0);
+}
+
+/* --- STEP2: 팀 선택 --- */
+function bodyTeam(){
+  if(!myDept) return `<div class="empty"><div class="ic">🏢</div><p>먼저 부서를 선택하세요</p></div>`;
+  const dtm = deptTeamMap();
+  const teams = Object.keys(dtm[myDept]||{}).sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
+  let h = `<label>팀 선택 <span class="req">*</span> <span class="auto-hint">선택하면 자동으로 넘어갑니다</span></label><div class="big-pick">`;
+  teams.forEach(t=>{
+    const cnt = SALES.filter(s=>s.team===t).length;
+    const lead = TL[t];
+    h += `<button class="big-chip ${myTeam===t?'on':''}" onclick="pickTeam('${t}')">
+      <span class="bc-ic">👥</span><span class="bc-t">${t}</span>
+      <span class="bc-s">${cnt}명${lead?' · 팀장 '+lead:' · 팀장 미지정'}</span></button>`;
+  });
+  h += `</div>`;
+  return h;
+}
+function pickTeam(team){
+  myTeam=team; me=null; form.agencies=[];
+  curStep=2;                 // 팀 고르면 바로 담당자 선택 단계로
+  renderSales(); window.scrollTo(0,0);
+}
+
+/* --- STEP3: 담당자 + 대리점 --- */
+function bodyMember(){
+  if(!myTeam) return `<div class="empty"><div class="ic">👥</div><p>먼저 팀을 선택하세요</p></div>`;
+  const members = SALES.filter(s=>s.team===myTeam).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  let h = `<label>담당자 선택 <span class="req">*</span> <span style="color:var(--mut);font-weight:400">(${members.length}명)</span></label>`;
+  h += `<div class="member-pick">`;
+  members.forEach(s=>{
+    h += `<button class="member-chip ${me&&me.name===s.name?'on':''}" onclick="pickMe('${s.name}')">
+      <span class="mc-av">${s.name.slice(0,1)}</span>${s.name}</button>`;
+  });
+  h += `</div>`;
+
+  if(me){
+    h += `<div style="background:var(--card2);border-radius:10px;padding:12px;margin-top:16px;font-size:13px;line-height:1.7">
+      <div>👤 <b>${me.name}</b> · ${me.team} · ${me.dept}</div>
+      <div style="color:var(--sub)">보고선: 팀장 <b style="color:var(--txt)">${me.teamLead||'(미지정)'}</b> → 부서장 <b style="color:var(--txt)">${me.deptHead||'(미지정)'}</b></div>
+    </div>`;
+    const mine = myAgencies();
+    const selName = form.agencies.length ? (AG.find(a=>a.code===form.agencies[0])||{}).name : '';
+    h += `<label>담당 대리점 <span class="req">*</span> <span style="color:var(--mut);font-weight:400">(내 담당 ${mine.length}곳 · 1곳 선택)</span></label>`;
+    if(mine.length){
+      h += `<input class="inp" id="agSearch" placeholder="🔍 대리점명 검색" oninput="filterAg(this.value)">`;
+      h += `<div class="ag-list" id="agList">${renderAgList(mine)}</div>`;
+      if(form.agencies.length)
+        h += `<div class="next-hint">✅ <b>${selName}</b> 선택됨 — 아래 <b>다음</b> 버튼을 눌러 계속하세요</div>`;
+      else
+        h += `<div class="next-hint muted">위에서 대리점 1곳을 선택하세요</div>`;
+    } else {
+      h += `<div style="padding:14px;background:var(--card2);border-radius:10px;font-size:13px;color:var(--sub);line-height:1.6">
+        이 담당자에게 배정된 대리점이 없습니다.<br>대리점 없이도 보고를 진행할 수 있습니다. <b>다음</b>을 눌러 계속하세요.</div>`;
+    }
+  }
+  return h;
+}
+function renderAgList(list){
+  if(!list.length) return `<div style="padding:16px;text-align:center;color:var(--mut);font-size:13px">담당 대리점이 없습니다</div>`;
+  return list.map(a=>`<div class="ag-item ${form.agencies.includes(a.code)?'on':''}" onclick="toggleAg('${a.code}')">
+    <div style="min-width:0"><div class="nm">${a.name}</div><div class="meta">${a.code} · ${a.type}</div></div>
+    <div class="gr">${a.grade}</div></div>`).join('');
+}
+function renderSelAg(){
+  if(!form.agencies.length) return '';
+  return form.agencies.map(c=>{const a=AG.find(x=>x.code===c);return `<span class="tag">${a.name}<button onclick="event.stopPropagation();toggleAg('${c}')">×</button></span>`}).join('');
+}
+function pickMe(name){
+  const found = SALES.find(s=>s.name===name && s.team===myTeam)||SALES.find(s=>s.name===name)||null;
+  me = (me && me.name===name) ? null : found;
+  form.agencies=[];
+  renderSales();
+}
+function filterAg(q){
+  const mine = myAgencies().filter(a=>a.name.includes(q)||a.code.includes(q));
+  document.getElementById('agList').innerHTML = renderAgList(mine);
+}
+function toggleAg(code){
+  // 단일 선택: 같은 항목 다시 누르면 해제, 아니면 교체
+  form.agencies = form.agencies.includes(code) ? [] : [code];
+  renderSales();
+}
+
+function setTarget(t){
+  form.target=t;
+  renderSales();
+}
+
+/* --- STEP4: 보고 대상 + 보고 항목 --- */
+function bodySections(){
+  const tl=me&&me.teamLead?(me.teamLead+' 팀장'):'팀장';
+  const dh=me&&me.deptHead?(me.deptHead+' 부서장'):'부서장';
+  // (1) 보고 대상
+  let h = `<label>보고 대상 <span class="req">*</span></label>
+  <div class="rpt-targets">
+    <div class="rpt-opt ${form.target==='lead'?'on':''}" onclick="setTarget('lead')">
+      <div class="ic">👔</div><div class="t">팀장 보고</div>
+      <div class="s">${tl} 에게만</div>
+    </div>
+    <div class="rpt-opt ${form.target==='leaddept'?'on':''}" onclick="setTarget('leaddept')">
+      <div class="ic">👔🏢</div><div class="t">팀장 + 부서장</div>
+      <div class="s">${tl} · ${dh}</div>
+    </div>
+  </div>`;
+  // (2) 보고 항목
+  const items=[
+    ['promo','📢','프로모션 성과 보고'],
+    ['inc','🤝','인센티브 체결/미체결 성과'],
+    ['note','⚠️','대리점 특이사항 보고'],
+    ['etc','📝','기타 보고'],
+  ];
+  h += `<label style="margin-top:20px">보고 항목 <span class="req">*</span> <span style="color:var(--mut);font-weight:400">(복수 선택 가능)</span></label>`;
+  h += items.map(([k,ic,t])=>`<div class="sec-toggle ${form.sections[k]?'on':''}" onclick="toggleSec('${k}')">
+      <div class="lbl"><span class="ic">${ic}</span>${t}</div><div class="sw"></div></div>`).join('');
+  return h;
+}
+function toggleSec(k){form.sections[k]=!form.sections[k];renderSales();}
+
+/* --- STEP4: 내용 작성 --- */
+function bodyContent(){
+  let h='';
+  const any = Object.values(form.sections).some(v=>v);
+  if(!any) return `<div class="empty"><div class="ic">📋</div><p>이전 단계에서<br>보고 항목을 먼저 선택하세요</p></div>`;
+
+  if(form.sections.promo){
+    h+=secWrap('📢 프로모션 성과',`
+      <label>프로모션명 <span class="req">*</span></label>
+      <input class="inp" value="${esc(form.promo.name)}" oninput="form.promo.name=this.value">
+      <label>홍보 채널</label>
+      <div class="chips" id="chPromoCh">${chips(['카카오톡','문자','SNS','이메일','오프라인'],form.promo.channel,'promoCh')}</div>
+      <div class="grid2" style="margin-top:14px">
+        ${stepper('홍보 횟수','promo.count')}
+        ${stepper('도달 고객수','promo.reach')}
+        ${stepper('예약 전환(건)','promo.bookings')}
+        ${stepper('예약 금액(만원)','promo.amount')}
+      </div>
+      <label>성과 평가 <span class="req">*</span></label>
+      <div class="chips">${chips(['상','중','하'],form.promo.result,'promoRes')}</div>
+      <label>메모 (선택)</label>
+      <textarea oninput="form.promo.memo=this.value" placeholder="특이사항·개선점">${esc(form.promo.memo)}</textarea>
+    `);
+  }
+  if(form.sections.inc){
+    h+=secWrap('🤝 인센티브 성과',`
+      <label style="color:var(--ok)">✅ 체결 성과</label>
+      ${stepper('체결 금액(만원)','inc.signedAmt')}
+      <label>체결 내용 (선택)</label>
+      <textarea oninput="form.inc.signNote=this.value" placeholder="조건·기간 등">${esc(form.inc.signNote)}</textarea>
+      <label style="color:var(--warn);margin-top:18px">⏳ 미체결 성과</label>
+      <label>미체결 사유/진행상황 (선택)</label>
+      <textarea oninput="form.inc.unsignNote=this.value" placeholder="보류 사유·다음 액션">${esc(form.inc.unsignNote)}</textarea>
+    `);
+  }
+  if(form.sections.note){
+    h+=secWrap('⚠️ 대리점 특이사항',`
+      <label>긴급도</label>
+      <div class="chips">${chips(['낮음','보통','높음','긴급'],form.note.urgency,'noteUrg')}</div>
+      <label>특이사항 내용 <span class="req">*</span></label>
+      <textarea oninput="form.note.text=this.value" placeholder="클레임, 거래 변동, 경쟁사 동향, 폐업/이전 등">${esc(form.note.text)}</textarea>
+    `);
+  }
+  if(form.sections.etc){
+    h+=secWrap('📝 기타 보고',`
+      <label>내용</label>
+      <textarea oninput="form.etc.text=this.value" placeholder="자유 기재">${esc(form.etc.text)}</textarea>
+    `);
+  }
+  return h;
+}
+function secWrap(title,inner){
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--card2)">
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px">${title}</div>${inner}</div>`;
+}
+function chips(arr,sel,group){
+  return arr.map(v=>`<div class="chip ${sel===v?'on':''}" onclick="pickChip('${group}','${v}')">${v}</div>`).join('');
+}
+function pickChip(group,v){
+  if(group==='promoCh') form.promo.channel = form.promo.channel===v?'':v;
+  if(group==='promoRes') form.promo.result = v;
+  if(group==='noteUrg') form.note.urgency = v;
+  renderSales();
+}
+function stepper(label,path){
+  const val = getPath(path);
+  return `<div><label style="margin-top:0">${label}</label>
+    <div class="stp">
+      <button onclick="bump('${path}',-1)">−</button>
+      <input type="number" value="${val}" oninput="setPath('${path}',+this.value||0)">
+      <button onclick="bump('${path}',1)">+</button>
+    </div></div>`;
+}
+function incAgPicker(kind,list){
+  const arr = form.inc[kind];
+  return `<div class="ag-pills" style="margin:6px 0 4px">
+    ${list.map(a=>`<span style="cursor:pointer;${arr.includes(a.code)?'background:var(--acc2);color:#fff':''}" onclick="toggleInc('${kind}','${a.code}')">${a.name}</span>`).join('')||'<span style="color:var(--mut)">담당 대리점 없음</span>'}
+  </div>`;
+}
+function toggleInc(kind,code){
+  const arr=form.inc[kind];const i=arr.indexOf(code);
+  if(i>=0)arr.splice(i,1);else arr.push(code);
+  renderSales();
+}
+function bump(path,d){setPath(path,Math.max(0,getPath(path)+d));renderSales();}
+function getPath(p){return p.split('.').reduce((o,k)=>o[k],form);}
+function setPath(p,v){const ks=p.split('.');let o=form;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=v;}
+
+/* --- STEP5: 검토 --- */
+function bodyReview(){
+  const tl=me.teamLead?(me.teamLead+' 팀장'):'팀장', dh=me.deptHead?(me.deptHead+' 부서장'):'부서장';
+  const recv = form.target==='lead' ? [tl] : [tl, dh];
+  let h=`<div style="text-align:center;margin-bottom:14px">
+    <div style="font-size:13px;color:var(--sub)">전송 대상</div>
+    ${recv.map(r=>`<span class="recv-pill">📩 ${r}</span>`).join('')}
+  </div>`;
+  // 기본정보
+  const agNames = form.agencies.map(c=>AG.find(a=>a.code===c)?.name).filter(Boolean);
+  h+=`<div class="review-block"><div class="rh">👤 담당자</div>
+    <div class="review-row"><span class="k">이름</span><span class="v">${me.name} · ${me.team}</span></div>
+    <div class="review-row"><span class="k">대상 대리점</span><span class="v">${agNames.join(', ')||'-'}</span></div></div>`;
+  if(form.sections.promo){const p=form.promo;
+    h+=`<div class="review-block"><div class="rh">📢 프로모션 성과</div>
+      <div class="review-row"><span class="k">프로모션</span><span class="v">${esc(p.name)||'-'}</span></div>
+      <div class="review-row"><span class="k">채널·횟수</span><span class="v">${p.channel||'-'} / ${p.count}회</span></div>
+      <div class="review-row"><span class="k">도달·예약</span><span class="v">${p.reach}명 / ${p.bookings}건</span></div>
+      <div class="review-row"><span class="k">금액·평가</span><span class="v">${p.amount}만원 / ${p.result}</span></div>
+      ${p.memo?`<div class="review-txt" style="margin-top:6px">${esc(p.memo)}</div>`:''}</div>`;
+  }
+  if(form.sections.inc){const c=form.inc;
+    h+=`<div class="review-block"><div class="rh">🤝 인센티브 성과</div>
+      <div class="review-row"><span class="k">✅ 체결 금액</span><span class="v">${c.signedAmt}만원</span></div>
+      ${c.signNote?`<div class="review-txt">${esc(c.signNote)}</div>`:''}
+      ${c.unsignNote?`<div class="review-row"><span class="k">⏳ 미체결</span><span class="v"></span></div><div class="review-txt">${esc(c.unsignNote)}</div>`:''}</div>`;
+  }
+  if(form.sections.note){
+    h+=`<div class="review-block"><div class="rh">⚠️ 대리점 특이사항 · ${form.note.urgency}</div>
+      <div class="review-txt">${esc(form.note.text)||'-'}</div></div>`;
+  }
+  if(form.sections.etc){
+    h+=`<div class="review-block"><div class="rh">📝 기타 보고</div>
+      <div class="review-txt">${esc(form.etc.text)||'-'}</div></div>`;
+  }
+  return h;
+}
+
+/* --- 스텝 이동 / 검증 --- */
+function canNext(){
+  if(curStep===0) return !!myDept;                       // 부서
+  if(curStep===1) return !!myTeam;                       // 팀
+  if(curStep===2){                                       // 담당자+대리점
+    if(!me) return false;
+    return myAgencies().length===0 || form.agencies.length>0; // 배정 대리점 없으면 통과
+  }
+  if(curStep===3) return Object.values(form.sections).some(v=>v); // 보고 항목
+  if(curStep===4){                                       // 내용 작성
+    if(form.sections.promo && !form.promo.name.trim()) return false;
+    if(form.sections.note && !form.note.text.trim()) return false;
+    return true;
+  }
+  return true;
+}
+function step(d){
+  if(d>0 && !canNext()){toast('필수 항목을 입력하세요');return;}
+  if(curStep===STEPS.length-1 && d>0){submitReport();return;}
+  curStep=Math.min(STEPS.length-1,Math.max(0,curStep+d));
+  renderSales();window.scrollTo(0,0);
+}
+function bindStep(){/* placeholder for focus etc. */}
+
+/* --- 제출 --- */
+function submitReport(){
+  const rec={
+    id:Date.now(),
+    ts:new Date(),
+    name:me.name, team:me.team, dept:me.dept,
+    teamLead:me.teamLead, deptHead:me.deptHead,
+    target:form.target,
+    agencies:form.agencies.map(c=>AG.find(a=>a.code===c)?.name).filter(Boolean),
+    sections:JSON.parse(JSON.stringify(form.sections)),
+    promo:{...form.promo}, inc:JSON.parse(JSON.stringify(form.inc)),
+    note:{...form.note}, etc:{...form.etc},
+    agObj:form.agencies.map(c=>AG.find(a=>a.code===c)),
+  };
+  REPORTS.unshift(rec);
+  // 완료 화면
+  const tlR=me.teamLead?(me.teamLead+' 팀장'):'팀장', dhR=me.deptHead?(me.deptHead+' 부서장'):'부서장';
+  const recv = form.target==='lead'?[tlR]:[tlR,dhR];
+  document.getElementById('salesView').innerHTML = `<div class="card"><div class="done">
+    <div class="big">✅</div><h2>보고가 전송됐습니다!</h2>
+    <p>${recv.join(' · ')} 에게 실시간 전달되었습니다.</p>
+    <div style="margin-top:16px">${recv.map(r=>`<span class="recv-pill">📩 ${r} <span class="live-dot"></span></span>`).join('')}</div>
+    <div style="margin-top:24px">
+      <button class="btn btn-pri" style="max-width:240px;margin:0 auto" onclick="newReport()">↩ 새 보고 작성</button>
+    </div>
+  </div></div>`;
+  document.getElementById('navBar').classList.add('hide');
+  toast('실시간 전송 완료 ✓');
+}
+function newReport(){
+  curStep=0; myDept=null; myTeam=null; me=null; form=resetForm();
+  renderSales();
+}
+
+/* ============================================================
+   팀장 대시보드 (로그인 후 본인 것만)
+   ============================================================ */
+let leadWho=null, leadFilter='all', leadAuthed=false, leadPinInput='', leadPeriod='day';
+function renderLead(){
+  const host=document.getElementById('leadView');
+  if(!leadAuthed){ host.innerHTML=loginGate('lead'); return; }
+  const myTeams=Object.keys(TL).filter(t=>TL[t]===leadWho);
+  // 내 팀에 온 보고 (기간 필터 전체 후 카드용은 별도)
+  const mineAll = REPORTS.filter(r=>r.teamLead===leadWho);
+  const periodReps = mineAll.filter(r=>inPeriod(r.ts,leadPeriod));
+  let reps = periodReps;
+  if(leadFilter!=='all') reps=reps.filter(r=>r.sections[leadFilter]);
+  // 팀원 명단 (내 팀 소속 세일즈)
+  const members = SALES.filter(s=>myTeams.includes(s.team));
+
+  let h=`<div class="dash-head"><div><h2>👔 팀장 대시보드</h2>
+    <div style="font-size:12px;color:var(--sub)">담당 팀: ${myTeams.join(', ')||'-'} · 팀원 ${members.length}명</div></div>
+    <div class="who-sel"><span class="logged">🔒 ${leadWho} 팀장</span>
+    <button class="logout-btn" onclick="logoutDash('lead')">로그아웃</button></div></div>`;
+  h+=periodToggle('lead');
+  h+=statRow(periodReps);
+  h+=memberStatus(members,periodReps,'lead');
+  h+=`<div class="feed-title">📨 ${leadPeriod==='day'?'오늘':'이번 주'} 보고 내역</div>`;
+  h+=filterBar('lead');
+  h+= reps.length? reps.map(r=>feedCard(r,'lead')).join('') : emptyState();
+  host.innerHTML=h;
+}
+
+/* ============================================================
+   부서장 대시보드 (로그인 후 본인 것만)
+   ============================================================ */
+let headWho=null, headFilter='all', headAuthed=false, headPinInput='', headPeriod='day';
+function renderHead(){
+  const host=document.getElementById('headView');
+  if(!headAuthed){ host.innerHTML=loginGate('head'); return; }
+  const myDepts=Object.keys(DH).filter(d=>DH[d]===headWho);
+  // 부서장은 'leaddept' 로 전송된 것만 받음
+  const mineAll = REPORTS.filter(r=>r.deptHead===headWho && r.target==='leaddept');
+  const periodReps = mineAll.filter(r=>inPeriod(r.ts,headPeriod));
+  let reps = periodReps;
+  if(headFilter!=='all') reps=reps.filter(r=>r.sections[headFilter]);
+  // 부서원 명단 (담당 부서 소속 세일즈 전체)
+  const members = SALES.filter(s=>myDepts.includes(s.dept));
+
+  let h=`<div class="dash-head"><div><h2>🏢 부서장 대시보드</h2>
+    <div style="font-size:12px;color:var(--sub)">담당 부서: ${myDepts.join(', ')||'-'} · 부서원 ${members.length}명 · 팀장+부서장 보고만</div></div>
+    <div class="who-sel"><span class="logged">🔒 ${headWho} 부서장</span>
+    <button class="logout-btn" onclick="logoutDash('head')">로그아웃</button></div></div>`;
+  h+=periodToggle('head');
+  h+=statRow(periodReps);
+  h+=memberStatus(members,periodReps,'head');
+  h+=headTeamSummary(headWho,headPeriod);
+  h+=`<div class="feed-title">📨 ${headPeriod==='day'?'오늘':'이번 주'} 보고 내역</div>`;
+  h+=filterBar('head');
+  h+= reps.length? reps.map(r=>feedCard(r,'head')).join('') : emptyState();
+  host.innerHTML=h;
+}
+
+/* --- 로그인 게이트 (본인 선택 + PIN) --- */
+/* 개인별 PIN (이름→PIN). 미지정자는 기본 PIN(0000) 사용.
+   ※ 추후 각 팀장·부서장 PIN을 여기에 추가하세요. */
+const PIN_MAP = {
+  '최정수':'1111',   // 영업1팀 팀장
+  '서민구':'1111',   // 영업2부 부서장
+};
+const DEFAULT_PIN='0000';
+function pinFor(name){ return PIN_MAP[name] || DEFAULT_PIN; }
+function loginGate(scope){
+  const isLead = scope==='lead';
+  const people = isLead
+    ? sortDepts([...new Set(Object.values(TL))].map(n=>n)) // 정렬은 이름 기준으로 아래서 재처리
+    : [...new Set(Object.values(DH))];
+  // 팀장: 부서>팀 순으로 정렬해 표시 / 부서장: 부서 순
+  let opts='';
+  if(isLead){
+    // 팀장 목록을 부서 순 → 팀 순으로
+    const entries=Object.keys(TL).map(team=>({team,dept:teamDept(team),name:TL[team]}))
+      .filter(e=>!EXCLUDE_DEPTS.includes(e.dept));
+    entries.sort((a,b)=>{
+      const da=DEPT_ORDER.indexOf(a.dept), db=DEPT_ORDER.indexOf(b.dept);
+      return (da<0?99:da)-(db<0?99:db) || a.team.localeCompare(b.team,'ko',{numeric:true});
+    });
+    const seen=new Set();
+    entries.forEach(e=>{ if(seen.has(e.name))return; seen.add(e.name);
+      opts+=`<option value="${e.name}">${e.name} 팀장 (${e.team})</option>`; });
+  } else {
+    const entries=Object.keys(DH).map(dept=>({dept,name:DH[dept]}))
+      .filter(e=>!EXCLUDE_DEPTS.includes(e.dept));
+    entries.sort((a,b)=>{const da=DEPT_ORDER.indexOf(a.dept),db=DEPT_ORDER.indexOf(b.dept);return (da<0?99:da)-(db<0?99:db);});
+    entries.forEach(e=>{ opts+=`<option value="${e.name}">${e.name} 부서장 (${e.dept})</option>`; });
+  }
+  const cur = isLead?leadWho:headWho;
+  const sel = `onchange="${isLead?'leadWho':'headWho'}=this.value"`;
+  return `<div class="card login-card">
+    <div class="login-ic">${isLead?'👔':'🏢'}</div>
+    <h2>${isLead?'팀장':'부서장'} 로그인</h2>
+    <p class="login-sub">본인 계정으로 로그인해야 보고를 볼 수 있습니다.<br>팀원·타 부서는 열람할 수 없습니다.</p>
+    <label>${isLead?'팀장':'부서장'} 선택</label>
+    <select id="${scope}LoginSel" ${sel}><option value="">${isLead?'팀장':'부서장'}을 선택하세요</option>${opts}</select>
+    <label>PIN 번호</label>
+    <input class="inp" type="password" inputmode="numeric" maxlength="4" placeholder="••••"
+      oninput="${isLead?'leadPinInput':'headPinInput'}=this.value">
+    <button class="btn btn-pri" style="width:100%;margin-top:16px" onclick="loginDash('${scope}')">로그인</button>
+    <div class="login-note">🔑 테스트 계정 — 최정수 팀장 / 서민구 부서장 · PIN <b>1111</b><br>그 외 계정은 임시 PIN <b>0000</b> · 실제 운영 시 개인별 비밀번호/사내 SSO로 연동하세요.</div>
+  </div>`;
+}
+function teamDept(team){
+  // 팀이 속한 부서 찾기 (SALES 기반, 없으면 대리점기준)
+  const s=SALES.find(x=>x.team===team); if(s)return s.dept;
+  const a=AG.find(x=>x.team===team); return a?a.dept:'';
+}
+function loginDash(scope){
+  if(scope==='lead'){
+    if(!leadWho){toast('팀장을 선택하세요');return;}
+    if(leadPinInput!==pinFor(leadWho)){toast('PIN이 올바르지 않습니다');return;}
+    leadAuthed=true; leadPinInput='';
+  } else {
+    if(!headWho){toast('부서장을 선택하세요');return;}
+    if(headPinInput!==pinFor(headWho)){toast('PIN이 올바르지 않습니다');return;}
+    headAuthed=true; headPinInput='';
+  }
+  (scope==='lead'?renderLead:renderHead)();
+}
+function logoutDash(scope){
+  if(scope==='lead'){leadAuthed=false; leadWho=null; leadFilter='all'; leadPeriod='day'; renderLead();}
+  else {headAuthed=false; headWho=null; headFilter='all'; headPeriod='day'; renderHead();}
+}
+function headTeamSummary(head,period){
+  const myDepts=Object.keys(DH).filter(d=>DH[d]===head);
+  const reps=REPORTS.filter(r=>myDepts.includes(r.dept) && r.target==='leaddept' && inPeriod(r.ts,period||'day'));
+  const byTeam={};
+  reps.forEach(r=>{byTeam[r.team]=(byTeam[r.team]||0)+1});
+  const teams=Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
+  if(!teams.length) return '';
+  return `<div class="card" style="padding:14px"><div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">팀별 보고 건수</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${teams.map(t=>`<span class="bdg tl">${t} <b style="color:var(--txt)">${byTeam[t]}</b></span>`).join('')}</div></div>`;
+}
+
+/* ===== 기간(일간/주간) 유틸 ===== */
+function inPeriod(ts,period){
+  const d=new Date(ts), now=new Date();
+  if(period==='week'){
+    // 이번 주 (월요일 00:00 ~ 현재)
+    const mon=new Date(now); const wd=(now.getDay()+6)%7; // 월=0
+    mon.setDate(now.getDate()-wd); mon.setHours(0,0,0,0);
+    return d>=mon;
+  }
+  // 오늘 (당일 00:00 ~)
+  const t0=new Date(now); t0.setHours(0,0,0,0);
+  return d>=t0;
+}
+function periodToggle(scope){
+  const p = scope==='lead'?leadPeriod:headPeriod;
+  return `<div class="period-toggle">
+    <button class="${p==='day'?'on':''}" onclick="setPeriod('${scope}','day')">📅 일간 (오늘)</button>
+    <button class="${p==='week'?'on':''}" onclick="setPeriod('${scope}','week')">🗓️ 주간 (이번 주)</button>
+  </div>`;
+}
+function setPeriod(scope,p){
+  if(scope==='lead'){leadPeriod=p;renderLead();} else {headPeriod=p;renderHead();}
+}
+
+/* ===== 팀원/부서원 실시간 보고 현황 매트릭스 ===== */
+function memberStatus(members,reps,scope){
+  if(!members.length) return '';
+  // 멤버별 집계
+  const byName={};
+  members.forEach(m=>{byName[m.name]={name:m.name,team:m.team,count:0,promo:0,inc:0,note:0,etc:0,last:null};});
+  reps.forEach(r=>{
+    const e=byName[r.name]; if(!e) return;
+    e.count++;
+    if(r.sections.promo)e.promo++; if(r.sections.inc)e.inc++;
+    if(r.sections.note)e.note++; if(r.sections.etc)e.etc++;
+    if(!e.last||r.ts>e.last)e.last=r.ts;
+  });
+  const list=Object.values(byName);
+  const done=list.filter(e=>e.count>0).length;
+  const rate=Math.round(done/list.length*100);
+  // 보고한 사람 위로, 팀/이름 순
+  list.sort((a,b)=> (b.count>0)-(a.count>0) || a.team.localeCompare(b.team,'ko',{numeric:true}) || a.name.localeCompare(b.name,'ko'));
+
+  let h=`<div class="card mstat-card">
+    <div class="mstat-head">
+      <div class="mstat-title">🧑‍💼 ${scope==='lead'?'팀원':'부서원'} 실시간 보고 현황</div>
+      <div class="mstat-rate"><b>${done}</b>/${list.length}명 보고 · <span class="${rate>=70?'r-good':rate>=40?'r-mid':'r-low'}">${rate}%</span></div>
+    </div>
+    <div class="mstat-bar"><div class="mstat-fill" style="width:${rate}%"></div></div>
+    <div class="mstat-list">`;
+  list.forEach(e=>{
+    const reported=e.count>0;
+    h+=`<div class="mrow ${reported?'on':'off'}">
+      <div class="mrow-l">
+        <span class="mdot ${reported?'g':''}"></span>
+        <span class="mname">${e.name}</span>
+        <span class="mteam">${e.team}</span>
+      </div>
+      <div class="mrow-r">`;
+    if(reported){
+      const tags=[];
+      if(e.promo)tags.push(`<span class="mtag promo">📢${e.promo}</span>`);
+      if(e.inc)tags.push(`<span class="mtag inc">🤝${e.inc}</span>`);
+      if(e.note)tags.push(`<span class="mtag note">⚠️${e.note}</span>`);
+      if(e.etc)tags.push(`<span class="mtag etc">📝${e.etc}</span>`);
+      h+=`${tags.join('')}<span class="mtime">${fmtTime(e.last)}</span>`;
+    } else {
+      h+=`<span class="mwait">미보고</span>`;
+    }
+    h+=`</div></div>`;
+  });
+  h+=`</div></div>`;
+  return h;
+}
+
+/* ===== 공용 대시보드 컴포넌트 ===== */
+function statRow(reps){
+  const promo=reps.filter(r=>r.sections.promo).length;
+  const inc=reps.filter(r=>r.sections.inc).length;
+  const note=reps.filter(r=>r.sections.note).length;
+  return `<div class="stats">
+    <div class="stat b"><div class="n">${reps.length}</div><div class="l">오늘 보고</div></div>
+    <div class="stat g"><div class="n">${promo}</div><div class="l">프로모션</div></div>
+    <div class="stat o"><div class="n">${inc}</div><div class="l">인센티브</div></div>
+    <div class="stat p"><div class="n">${note}</div><div class="l">특이사항</div></div>
+  </div>`;
+}
+function filterBar(scope){
+  const f = scope==='lead'?leadFilter:headFilter;
+  const set = scope==='lead'?'leadFilter':'headFilter';
+  const re = scope==='lead'?'renderLead':'renderHead';
+  const opts=[['all','전체'],['promo','📢 프로모션'],['inc','🤝 인센티브'],['note','⚠️ 특이사항'],['etc','📝 기타']];
+  return `<div class="filter-bar">${opts.map(([k,l])=>`<button class="${f===k?'on':''}" onclick="${set}='${k}';${re}()">${l}</button>`).join('')}</div>`;
+}
+function emptyState(){
+  return `<div class="empty"><div class="ic">📭</div><p>아직 들어온 보고가 없습니다</p></div>`;
+}
+function feedCard(r,scope){
+  const init=r.name.slice(0,1);
+  let h=`<div class="feed-item"><div class="fi-head">
+    <div class="fi-who"><div class="avatar">${init}</div>
+    <div><div class="nm">${r.name}</div><div class="mt">${r.team} · ${r.dept}</div></div></div>
+    <div class="fi-time">${timeAgo(r.ts)}<br>${fmtTime(r.ts)}</div></div>`;
+  // 배지
+  h+=`<div class="badges">`;
+  if(r.sections.promo)h+=`<span class="bdg promo">📢 프로모션</span>`;
+  if(r.sections.inc)h+=`<span class="bdg inc">🤝 인센티브</span>`;
+  if(r.sections.note)h+=`<span class="bdg note">⚠️ 특이사항${r.note.urgency==='긴급'||r.note.urgency==='높음'?' '+r.note.urgency:''}</span>`;
+  if(r.sections.etc)h+=`<span class="bdg etc">📝 기타</span>`;
+  h+= r.target==='leaddept'?`<span class="bdg dh">팀장+부서장</span>`:`<span class="bdg tl">팀장</span>`;
+  h+=`</div>`;
+  // 대리점
+  if(r.agencies.length) h+=`<div class="ag-pills">${r.agencies.map(n=>`<span>🏪 ${n}</span>`).join('')}</div>`;
+  // 내용
+  if(r.sections.promo){const p=r.promo;
+    h+=`<div class="fi-section"><div class="st">📢 프로모션 성과</div>
+      <div class="fi-kv"><span class="k">프로모션</span><span class="v">${esc(p.name)||'-'}</span>
+      <span class="k">채널/횟수</span><span class="v">${p.channel||'-'} · ${p.count}회</span>
+      <span class="k">도달/예약</span><span class="v">${p.reach}명 · ${p.bookings}건</span>
+      <span class="k">금액/평가</span><span class="v">${p.amount}만원 · ${p.result}</span></div>
+      ${p.memo?`<div class="fi-body" style="margin-top:6px">${esc(p.memo)}</div>`:''}</div>`;
+  }
+  if(r.sections.inc){const c=r.inc;
+    h+=`<div class="fi-section"><div class="st">🤝 인센티브 성과</div>
+      <div class="fi-kv"><span class="k" style="color:var(--ok)">✅ 체결 금액</span><span class="v">${c.signedAmt}만원</span></div>
+      ${c.signNote?`<div class="fi-body" style="margin-top:6px">· 체결: ${esc(c.signNote)}</div>`:''}
+      ${c.unsignNote?`<div class="fi-body">· 미체결: ${esc(c.unsignNote)}</div>`:''}</div>`;
+  }
+  if(r.sections.note){
+    const col=r.note.urgency==='긴급'?'var(--bad)':r.note.urgency==='높음'?'var(--warn)':'var(--acc)';
+    h+=`<div class="fi-section"><div class="st" style="color:${col}">⚠️ 대리점 특이사항 · ${r.note.urgency}</div>
+      <div class="fi-body">${esc(r.note.text)}</div></div>`;
+  }
+  if(r.sections.etc){
+    h+=`<div class="fi-section"><div class="st">📝 기타 보고</div><div class="fi-body">${esc(r.etc.text)}</div></div>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+
+/* ===== 유틸 ===== */
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function fmtDate(d){return `${d.getFullYear()}.${p2(d.getMonth()+1)}.${p2(d.getDate())} (${'일월화수목금토'[d.getDay()]})`;}
+function fmtTime(d){return `${p2(d.getHours())}:${p2(d.getMinutes())}`;}
+function p2(n){return String(n).padStart(2,'0');}
+function timeAgo(d){const m=Math.floor((Date.now()-d.getTime())/60000);
+  if(m<1)return '방금';if(m<60)return m+'분 전';const h=Math.floor(m/60);if(h<24)return h+'시간 전';return Math.floor(h/24)+'일 전';}
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="live-dot"></span>${msg}`;
+  document.getElementById('toastHost').appendChild(t);
+  setTimeout(()=>t.remove(),2200);
+}
+
+/* ===== 샘플 데이터 (데모용) ===== */
+function seedSample(){
+  const now=Date.now();
+  // 오늘 샘플은 '오늘 날짜 + 지정 시각'으로 고정해 자정 경계와 무관하게 당일로 잡히게 함
+  function todayAt(h,m){const d=new Date();d.setHours(h,m,0,0); if(d.getTime()>now) d.setTime(now-60000); return d;}
+  function mk(name,when,target,sections,extra){
+    const s=DB.sales.map(x=>({name:x[0],team:x[1],dept:x[2],teamLead:x[3],deptHead:x[4]})).find(p=>p.name===name);
+    if(!s)return null;
+    const ts = (when instanceof Date) ? when : new Date(now-when*60000);
+    return Object.assign({
+      id:+ts,ts,
+      name:s.name,team:s.team,dept:s.dept,teamLead:s.teamLead,deptHead:s.deptHead,
+      target,agencies:[],sections,
+      promo:{name:'',channel:'',count:0,reach:0,bookings:0,amount:0,result:'중',memo:''},
+      inc:{signed:[],unsigned:[],signedAmt:0,signNote:'',unsignNote:''},
+      note:{text:'',urgency:'보통'},etc:{text:''}
+    },extra);
+  }
+  const DAY=1440;
+  const arr=[
+    // ===== 오늘 보고 =====
+    mk('오형석',todayAt(9,12),'leaddept',{promo:true,inc:false,note:false,etc:false},
+      {promo:{name:'5월 하나 포커스데이',channel:'카카오톡',count:42,reach:380,bookings:12,amount:2400,result:'상',memo:'유럽 상품 반응 좋음. 다음주 추가 발송 예정.'}}),
+    mk('김선우',todayAt(10,5),'leaddept',{promo:false,inc:true,note:false,etc:false},
+      {inc:{signed:[],unsigned:[],signedAmt:1500,signNote:'한양여행사 분기 인센티브 갱신 완료',unsignNote:'태평양리조트 단가 협의중'}}),
+    mk('정솔빈',todayAt(11,30),'leaddept',{promo:true,inc:false,note:true,etc:false},
+      {promo:{name:'홈플러스 유류할증료 FREEZE 제휴',channel:'문자',count:30,reach:210,bookings:7,amount:1100,result:'중',memo:''},
+       note:{text:'여행문화 대리점 담당자 교체 예정. 차주 인수인계 미팅 필요.',urgency:'높음'}}),
+    mk('배정선',todayAt(13,20),'lead',{promo:false,inc:false,note:true,etc:true},
+      {note:{text:'투어뱅크[광주] 경쟁사(모두투어) 대규모 프로모션 진입. 대응 필요.',urgency:'긴급'},
+       etc:{text:'호남권 워크숍 일정 6/20 확정 요청드립니다.'}}),
+    mk('김성원',todayAt(14,45),'leaddept',{promo:true,inc:true,note:false,etc:false},
+      {promo:{name:'5월 골든타임 기획전',channel:'SNS',count:18,reach:520,bookings:9,amount:1850,result:'상',memo:'인스타 릴스 조회수 호조'},
+       inc:{signed:[],unsigned:[],signedAmt:800,signNote:'시몽여행사 신규 인센티브 체결',unsignNote:''}}),
+    // ===== 이번 주(이전 날짜) 보고 — 주간 보기에서만 추가로 보임 =====
+    mk('오형석',DAY*2+30,'leaddept',{promo:true,inc:false,note:false,etc:false},
+      {promo:{name:'5월 골든타임 기획전',channel:'이메일',count:25,reach:300,bookings:6,amount:900,result:'중',memo:''}}),
+    mk('김윤',DAY*1+200,'leaddept',{inc:true,promo:false,note:false,etc:false},
+      {inc:{signed:[],unsigned:[],signedAmt:1200,signNote:'대한여행 인센티브 체결',unsignNote:''}}),
+    mk('김세윤',DAY*3+60,'lead',{note:true,promo:false,inc:false,etc:false},
+      {note:{text:'담당 대리점 일부 휴업 안내.',urgency:'보통'}}),
+    mk('김성원',DAY*2+90,'leaddept',{promo:true,inc:false,note:false,etc:false},
+      {promo:{name:'5월 하나 포커스데이',channel:'카카오톡',count:33,reach:280,bookings:8,amount:1400,result:'중',memo:''}}),
+  ].filter(Boolean);
+  return arr;
+}
+
+</script>
+</body>
+</html>
