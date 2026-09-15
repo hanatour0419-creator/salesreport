@@ -555,6 +555,12 @@ function resetReportContent(){
    눌러도 입력 중이던 내용이 사라지지 않도록). */
 let lastContentAgency = null;
 
+/* "내가 작성한 보고" 목록 기간 필터 — 기본값 '이번 주'만 보이고,
+   이전 내역은 기간을 선택해서 볼 수 있습니다 (팀장/부서장 대시보드와
+   동일한 period-toggle 컴포넌트를 'my' scope로 재사용합니다). */
+let myReportsPeriod='week';
+let myCustomStart='', myCustomEnd='';
+
 const STEPS=['부서 선택','팀 선택','담당자 · 대리점','보고 항목','내용 작성','검토 & 제출'];
 
 /* ===== 초기화 ===== */
@@ -772,6 +778,7 @@ function pickMe(name){
   rptForm.agencies=[];
   resetReportContent();   // 담당자가 바뀌면 이전에 입력하던 보고 항목 내용을 초기화합니다
   lastContentAgency=null;
+  myReportsPeriod='week'; myCustomStart=''; myCustomEnd=''; // 담당자를 바꾸면 "내가 작성한 보고"도 이번 주부터 다시 봅니다
   renderSales();
   if(me) loadReports().then(()=>{ if(me) renderSales(); });
 }
@@ -782,13 +789,19 @@ function myReports(){
 }
 function renderMyReports(){
   if(!me) return '';
-  const mine = myReports();
+  const all = myReports();
+  const mine = all.filter(r=>inPeriod(r.ts, myReportsPeriod, 'my'));
   let h = `<label style="margin-top:20px;display:flex;align-items:center;justify-content:space-between">
-    <span>📋 내가 작성한 보고 <span style="color:var(--mut);font-weight:400">(${mine.length}건)</span></span>
+    <span>📋 내가 작성한 보고 <span style="color:var(--mut);font-weight:400">(${esc(periodLabel('my'))} · ${mine.length}건)</span></span>
     <button type="button" style="font-size:11px;font-weight:600;color:var(--acc2);background:rgba(37,99,235,.08);border:none;padding:5px 10px;border-radius:99px" onclick="refreshMyReports()">🔄 새로고침</button>
   </label>`;
-  if(!mine.length){
+  h += periodToggle('my');
+  if(!all.length){
     h += `<div style="padding:14px;background:var(--card2);border-radius:10px;font-size:13px;color:var(--sub)">아직 작성한 보고가 없습니다.</div>`;
+    return h;
+  }
+  if(!mine.length){
+    h += `<div style="padding:14px;background:var(--card2);border-radius:10px;font-size:13px;color:var(--sub)">${esc(periodLabel('my'))} 기간에는 작성한 보고가 없습니다. 위에서 기간을 바꿔보세요.</div>`;
     return h;
   }
   h += `<div style="display:flex;flex-direction:column;gap:8px">`;
@@ -1407,12 +1420,19 @@ function headTeamSummary(head,period){
 }
 
 /* ===== 기간(일간/주간/월간/연간/기간지정) 유틸 ===== */
+/* 팀장('lead')·부서장('head')·담당자 본인 보고 이력('my') 공통으로 쓰는
+   기간 필터 상태를 scope 문자열로 조회/기록하는 헬퍼입니다. */
+function periodState(scope){
+  if(scope==='lead') return {get p(){return leadPeriod;}, set p(v){leadPeriod=v;}, get cs(){return leadCustomStart;}, set cs(v){leadCustomStart=v;}, get ce(){return leadCustomEnd;}, set ce(v){leadCustomEnd=v;}};
+  if(scope==='head') return {get p(){return headPeriod;}, set p(v){headPeriod=v;}, get cs(){return headCustomStart;}, set cs(v){headCustomStart=v;}, get ce(){return headCustomEnd;}, set ce(v){headCustomEnd=v;}};
+  return {get p(){return myReportsPeriod;}, set p(v){myReportsPeriod=v;}, get cs(){return myCustomStart;}, set cs(v){myCustomStart=v;}, get ce(){return myCustomEnd;}, set ce(v){myCustomEnd=v;}};
+}
 function inPeriod(ts,period,scope){
   const d=new Date(ts), now=new Date();
   if(period==='custom'){
     // 기간 지정: 시작일/종료일 중 비워둔 쪽은 무제한으로 취급
-    const s = scope==='lead'?leadCustomStart:headCustomStart;
-    const e = scope==='lead'?leadCustomEnd:headCustomEnd;
+    const st = periodState(scope);
+    const s = st.cs, e = st.ce;
     if(!s && !e) return true;
     if(s){ const start=new Date(s+'T00:00:00'); if(d<start) return false; }
     if(e){ const end=new Date(e+'T23:59:59'); if(d>end) return false; }
@@ -1439,7 +1459,7 @@ function inPeriod(ts,period,scope){
   return d>=t0;
 }
 function periodLabel(scope){
-  const p = scope==='lead'?leadPeriod:headPeriod;
+  const p = periodState(scope).p;
   if(p==='day') return '오늘';
   if(p==='week') return '이번 주';
   if(p==='month') return '이번 달';
@@ -1448,17 +1468,17 @@ function periodLabel(scope){
   return '';
 }
 function customRangeLabel(scope){
-  const cs = scope==='lead'?leadCustomStart:headCustomStart;
-  const ce = scope==='lead'?leadCustomEnd:headCustomEnd;
+  const st = periodState(scope);
+  const cs = st.cs, ce = st.ce;
   if(!cs && !ce) return '전체 기간';
   return `${cs||'처음'} ~ ${ce||'현재'}`;
 }
 function periodToggle(scope){
-  const p = scope==='lead'?leadPeriod:headPeriod;
-  const cs = scope==='lead'?leadCustomStart:headCustomStart;
-  const ce = scope==='lead'?leadCustomEnd:headCustomEnd;
+  const st = periodState(scope);
+  const p = st.p, cs = st.cs, ce = st.ce;
+  // 담당자 본인 이력('my')은 오늘 단위는 굳이 필요 없어 기본을 '이번 주'로 둡니다.
   let h = `<div class="period-toggle">
-    <button class="${p==='day'?'on':''}" onclick="setPeriod('${scope}','day')">📅 일간 (오늘)</button>
+    ${scope==='my'?'':`<button class="${p==='day'?'on':''}" onclick="setPeriod('${scope}','day')">📅 일간 (오늘)</button>`}
     <button class="${p==='week'?'on':''}" onclick="setPeriod('${scope}','week')">🗓️ 주간 (이번 주)</button>
     <button class="${p==='month'?'on':''}" onclick="setPeriod('${scope}','month')">🗓️ 월간 (이번 달)</button>
     <button class="${p==='year'?'on':''}" onclick="setPeriod('${scope}','year')">🗓️ 연간 (올해)</button>
@@ -1477,19 +1497,25 @@ function periodToggle(scope){
 }
 function clearInsight(scope){
   // 기간이 바뀌면 이전 기간 기준으로 생성된 AI 인사이트는 더 이상 유효하지 않으므로 비움
+  // ('my' scope는 AI 인사이트가 없는 담당자 본인 이력이므로 해당 없음)
   if(scope==='lead'){ leadInsight=null; leadInsightErr=null; }
-  else { headInsight=null; headInsightErr=null; }
+  else if(scope==='head'){ headInsight=null; headInsightErr=null; }
+}
+function rerenderForScope(scope){
+  if(scope==='lead') renderLead();
+  else if(scope==='head') renderHead();
+  else renderSales();
 }
 function setPeriod(scope,p){
-  if(scope==='lead'){leadPeriod=p;} else {headPeriod=p;}
+  periodState(scope).p = p;
   clearInsight(scope);
-  (scope==='lead'?renderLead:renderHead)();
+  rerenderForScope(scope);
 }
 function setCustomRange(scope,which,val){
-  if(scope==='lead'){ if(which==='start')leadCustomStart=val; else leadCustomEnd=val; }
-  else { if(which==='start')headCustomStart=val; else headCustomEnd=val; }
+  const st = periodState(scope);
+  if(which==='start') st.cs = val; else st.ce = val;
   clearInsight(scope);
-  (scope==='lead'?renderLead:renderHead)();
+  rerenderForScope(scope);
 }
 
 /* ===== 팀원/부서원 실시간 보고 현황 매트릭스 ===== */
