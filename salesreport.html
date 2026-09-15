@@ -294,10 +294,12 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   padding:8px 14px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(22,163,74,.3)}
 .xlsx-btn:active{transform:scale(.96)}
 
-/* 담당자 작성 화면 — 작성 소요시간 타이머 */
-.form-timer-wrap{display:flex;justify-content:flex-end;margin:-6px 0 10px}
-.form-timer-badge{font-size:11px;font-weight:700;color:var(--acc2);background:rgba(37,99,235,.08);
-  padding:5px 11px;border-radius:99px;display:inline-flex;align-items:center;gap:4px}
+/* 담당자 작성 화면 — 작성 소요시간 타이머 (플로팅 배너 — 입력을 가리지 않도록
+   화면에 고정된 채 떠 있고, 클릭/터치를 그대로 아래로 통과시킵니다) */
+.form-timer-wrap{position:fixed;top:calc(128px + env(safe-area-inset-top));right:14px;z-index:45;pointer-events:none}
+.form-timer-badge{font-size:11px;font-weight:700;color:#fff;background:rgba(37,99,235,.92);
+  padding:7px 13px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;
+  box-shadow:0 4px 14px rgba(37,99,235,.35);pointer-events:none}
 
 /* 보고 수정 기한 마감 표시 */
 .edit-locked{font-size:11px;font-weight:700;color:var(--mut);background:var(--card2);padding:6px 12px;border-radius:99px;white-space:nowrap}
@@ -479,8 +481,9 @@ let rptForm=resetForm();
 let editingId=null;    // null=새 보고 작성, 값이 있으면 해당 id 보고를 수정 중
 
 /* ===== ⏱️ 보고 작성 소요시간 측정 (업무 효율성 분석용) =====
-   담당자가 보고를 새로 작성/수정하기 시작한 시점부터 "제출하기"를 누를 때까지
-   걸린 시간을 재서, 제출 데이터에 함께 실어 보냅니다. */
+   "보고 항목"(4번째) 단계에 처음 들어오는 순간부터 "제출하기"를 누르는
+   순간까지 걸린 시간을 재서, 제출 데이터에 함께 실어 보냅니다.
+   (담당자·대리점을 고르는 중간 클릭으로는 다시 초기화되지 않습니다) */
 let formStartTs=null, formTimerHandle=null;
 function startFormTimer(){
   formStartTs = Date.now();
@@ -490,6 +493,13 @@ function startFormTimer(){
 }
 function stopFormTimer(){
   if(formTimerHandle){ clearInterval(formTimerHandle); formTimerHandle=null; }
+}
+/* 새 보고를 시작할 때(newReport) 호출 — 이전 보고의 타이머 값이 남아있지
+   않도록 완전히 초기화합니다. "보고 항목" 단계에 다시 들어오면 그때부터
+   새로 측정이 시작됩니다. */
+function resetFormTimer(){
+  stopFormTimer();
+  formStartTs = null;
 }
 function fmtDuration(sec){
   sec = Math.max(0, Math.round(Number(sec)||0));
@@ -524,13 +534,32 @@ function resetForm(){
     etc:{text:''}
   };
 }
+/* 담당자(팀원)나 대리점을 바꿀 때, 이전에 입력하던 "보고 항목" 내용(방문유형·
+   논의상품군·후속조치·프로모션/인센티브/특이사항/기타, 보고 대상)만 새로
+   초기화합니다. agencies 배열 자체는 호출한 쪽(pickMe/toggleAg)에서 따로
+   관리하므로 여기서는 건드리지 않습니다. */
+function resetReportContent(){
+  const fresh = resetForm();
+  rptForm.target = fresh.target;
+  rptForm.visitTypes = fresh.visitTypes;
+  rptForm.productLines = fresh.productLines;
+  rptForm.followUps = fresh.followUps;
+  rptForm.sections = fresh.sections;
+  rptForm.promo = fresh.promo;
+  rptForm.inc = fresh.inc;
+  rptForm.note = fresh.note;
+  rptForm.etc = fresh.etc;
+}
+/* 현재 보고 항목 내용이 "어느 대리점 것"인지 기억해뒀다가, 실제로 다른
+   대리점으로 바뀔 때만 내용을 초기화합니다 (같은 대리점을 실수로 두 번
+   눌러도 입력 중이던 내용이 사라지지 않도록). */
+let lastContentAgency = null;
 
 const STEPS=['부서 선택','팀 선택','담당자 · 대리점','보고 항목','내용 작성','검토 & 제출'];
 
 /* ===== 초기화 ===== */
 document.getElementById('todayLbl').textContent = fmtDate(new Date());
 renderSales();
-startFormTimer();
 if(!apiReady()){
   const warn=document.createElement('div');
   warn.style.cssText='background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;text-align:center;padding:9px 14px;border-bottom:1px solid #fcd34d';
@@ -564,7 +593,9 @@ function renderSales(){
   const host=document.getElementById('salesView');
   const pct = Math.round((curStep)/(STEPS.length-1)*100);
   let html = `<div class="prog"><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="pct">${pct}%</div></div>`;
-  html += `<div class="form-timer-wrap"><span id="formTimer" class="form-timer-badge" title="보고 작성을 시작한 뒤 지난 시간입니다">⏱️ 0초</span></div>`;
+  if(formStartTs){
+    html += `<div class="form-timer-wrap"><span id="formTimer" class="form-timer-badge" title="보고 항목 단계에 들어온 뒤 지난 시간입니다">⏱️ 0초</span></div>`;
+  }
   html += breadcrumb();
   html += `<div class="card">`;
   html += `<div class="step-head"><div class="step-num">${curStep+1}</div><div><h2>${STEPS[curStep]}</h2><div class="d">${stepDesc(curStep)}</div></div></div>`;
@@ -590,6 +621,11 @@ function renderSales(){
   // 하단 고정 네비바는 사용하지 않음 (카드 내부 인라인 버튼으로 대체 — 모바일에서 안정적)
   document.getElementById('navBar').classList.add('hide');
   bindStep(curStep);
+  // ⏱️ 위에서 배지를 항상 "0초"로 새로 그리기 때문에, 매 렌더 직후 실제 경과
+  // 시간으로 즉시 갱신합니다 (1초 주기 타이머만 믿으면 칩을 누를 때마다
+  // 화면이 0초로 초기화된 것처럼 보이는 문제가 있었습니다 — formStartTs
+  // 자체는 안 바뀌지만 화면 표시만 늦게 따라잡던 것).
+  updateFormTimerUI();
 }
 
 function stepDesc(s){
@@ -734,6 +770,8 @@ function pickMe(name){
   const found = SALES.find(s=>s.name===name && s.team===myTeam)||SALES.find(s=>s.name===name)||null;
   me = (me && me.name===name) ? null : found;
   rptForm.agencies=[];
+  resetReportContent();   // 담당자가 바뀌면 이전에 입력하던 보고 항목 내용을 초기화합니다
+  lastContentAgency=null;
   renderSales();
   if(me) loadReports().then(()=>{ if(me) renderSales(); });
 }
@@ -819,6 +857,7 @@ function startEditReport(id){
     note: {...resetForm().note, ...r.note},
     etc: {...resetForm().etc, ...r.etc},
   };
+  lastContentAgency = rptForm.agencies[0] || null; // 이미 불러온 대리점을 다시 눌러도 수정 내용이 지워지지 않도록
   curStep = 3;
   renderSales(); window.scrollTo(0,0);
   toast('✏️ 수정 모드로 전환됐습니다');
@@ -829,7 +868,15 @@ function filterAg(q){
 }
 function toggleAg(code){
   // 단일 선택: 같은 항목 다시 누르면 해제, 아니면 교체
-  rptForm.agencies = rptForm.agencies.includes(code) ? [] : [code];
+  const wasSelected = rptForm.agencies.includes(code);
+  rptForm.agencies = wasSelected ? [] : [code];
+  if(!wasSelected){
+    // 새로 대리점을 선택함 — 직전에 내용을 입력하던 대리점과 다르면
+    // (다른 대리점으로 전환한 것이므로) 보고 항목 내용을 초기화합니다.
+    // 같은 대리점을 두 번 눌러 다시 선택한 경우는 내용을 그대로 둡니다.
+    if(lastContentAgency && lastContentAgency!==code) resetReportContent();
+    lastContentAgency = code;
+  }
   renderSales();
 }
 
@@ -883,8 +930,8 @@ function bodyContent(){
 
   if(rptForm.sections.promo){
     h+=secWrap('📢 프로모션 성과',`
-      <label>프로모션명 <span class="req">*</span></label>
-      <input class="inp" value="${esc(rptForm.promo.name)}" oninput="rptForm.promo.name=this.value">
+      <label>프로모션명 <span style="color:var(--mut);font-weight:400">(선택)</span></label>
+      <input class="inp" placeholder="예: 여름 성수기 프로모션" value="${esc(rptForm.promo.name)}" oninput="rptForm.promo.name=this.value">
       <label>홍보 채널 <span class="req">*</span> <span style="color:var(--mut);font-weight:400">(중복 선택 가능)</span></label>
       <div class="chips" id="chPromoCh">${multiChips(['카카오톡','문자','SNS','이메일','오프라인'],rptForm.promo.channel,'promo.channel')}</div>
       <div class="grid2" style="margin-top:14px">
@@ -1027,8 +1074,7 @@ function canNext(){
   }
   if(curStep===3) return Object.values(rptForm.sections).some(v=>v); // 보고 항목
   if(curStep===4){                                       // 내용 작성
-    if(rptForm.sections.promo && !rptForm.promo.name.trim()) return false;
-    if(rptForm.sections.promo && rptForm.promo.channel.length===0) return false;
+    if(rptForm.sections.promo && rptForm.promo.channel.length===0) return false; // 프로모션명은 선택 입력, 홍보 채널만 필수
     if(rptForm.sections.note && !rptForm.note.text.trim()) return false;
     return true;
   }
@@ -1039,6 +1085,9 @@ function step(d){
   if(d>0 && !canNext()){toast('필수 항목을 입력하세요');return;}
   if(curStep===STEPS.length-1 && d>0){submitReport();return;}
   curStep=Math.min(STEPS.length-1,Math.max(0,curStep+d));
+  // ⏱️ "보고 항목"(4번째) 단계에 처음 들어오는 순간부터 제출할 때까지 시간을 잽니다.
+  // 이미 재고 있는 중이면(뒤로 갔다 다시 들어와도) 다시 시작하지 않습니다.
+  if(curStep===3 && !formStartTs) startFormTimer();
   renderSales();window.scrollTo(0,0);
 }
 function bindStep(){/* placeholder for focus etc. */}
@@ -1097,7 +1146,8 @@ async function submitReport(){
 }
 function newReport(){
   curStep=0; myDept=null; myTeam=null; me=null; rptForm=resetForm(); editingId=null;
-  startFormTimer();
+  lastContentAgency=null;
+  resetFormTimer(); // ⏱️ "보고 항목" 단계에 다시 들어올 때부터 새로 측정합니다
   renderSales();
 }
 
